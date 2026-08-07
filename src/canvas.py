@@ -19,12 +19,6 @@ class PDFCanvas(Gtk.DrawingArea):
         self.is_drawing = False
         self.bbox = None
 
-        self.pan_hadj = None
-        self.pan_vadj = None
-        self.pan_h_start = 0.0
-        self.pan_v_start = 0.0
-        self.is_panning = False
-
         self.on_selection_completed = None
         self.on_zoom_changed = None
 
@@ -34,13 +28,6 @@ class PDFCanvas(Gtk.DrawingArea):
         click_gesture.connect("pressed", self.on_press)
         click_gesture.connect("released", self.on_release)
         self.add_controller(click_gesture)
-
-        pan_gesture = Gtk.GestureDrag.new()
-        pan_gesture.set_button(2)
-        pan_gesture.connect("drag-begin", self.on_pan_begin)
-        pan_gesture.connect("drag-update", self.on_pan_update)
-        pan_gesture.connect("drag-end", self.on_pan_end)
-        self.add_controller(pan_gesture)
 
         motion_controller = Gtk.EventControllerMotion.new()
         motion_controller.connect("motion", self.on_motion)
@@ -256,27 +243,6 @@ class PDFCanvas(Gtk.DrawingArea):
         self.start_x = self.curr_x = x
         self.start_y = self.curr_y = y
         self.is_drawing = True
-
-    def on_pan_begin(self, gesture, x, y):
-        parent = self._get_scrolled_window()
-        if parent is None:
-            return
-        self.pan_hadj = parent.get_hadjustment()
-        self.pan_vadj = parent.get_vadjustment()
-        self.pan_h_start = self.pan_hadj.get_value()
-        self.pan_v_start = self.pan_vadj.get_value()
-        self.is_panning = True
-        self.set_cursor_from_name("grabbing")
-
-    def on_pan_update(self, gesture, dx, dy):
-        if not self.is_panning:
-            return
-        self.pan_hadj.set_value(self.pan_h_start - dx)
-        self.pan_vadj.set_value(self.pan_v_start - dy)
-
-    def on_pan_end(self, gesture, x, y):
-        self.is_panning = False
-        self.set_cursor_from_name("default")
 
     def on_motion(self, controller, x, y):
         if self.is_drawing:

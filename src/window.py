@@ -94,10 +94,26 @@ class MainWindow(Adw.ApplicationWindow):
         self.stack.add_named(self.status_page, "empty")
 
         scroll = Gtk.ScrolledWindow()
+        scroll.set_kinetic_scrolling(False)
         self.canvas = PDFCanvas()
         self.canvas.on_selection_completed = self.on_bbox_extracted
         self.canvas.on_zoom_changed = self.on_zoom_changed
         scroll.set_child(self.canvas)
+
+        self.document_scroll = scroll
+        self.pan_hadj = None
+        self.pan_vadj = None
+        self.pan_h_start = 0.0
+        self.pan_v_start = 0.0
+        pan_gesture = Gtk.GestureDrag.new()
+        pan_gesture.set_button(2)
+        pan_gesture.set_exclusive(True)
+        pan_gesture.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+        pan_gesture.connect("drag-begin", self.on_pan_begin)
+        pan_gesture.connect("drag-update", self.on_pan_update)
+        pan_gesture.connect("drag-end", self.on_pan_end)
+        scroll.add_controller(pan_gesture)
+
         self.stack.add_named(scroll, "content")
         self.stack.set_visible_child_name("empty")
 
@@ -317,9 +333,21 @@ class MainWindow(Adw.ApplicationWindow):
         drop_target.connect("drop", self.on_file_dropped)
         self.add_controller(drop_target)
 
-        # Keyboard shortcuts (HIG: Ctrl++, Ctrl+-, Ctrl+0)
+        # Keyboard shortcuts (HIG: Ctrl+O, Ctrl++, Ctrl+-, Ctrl+0)
         shortcuts = Gtk.ShortcutController()
         shortcuts.set_scope(Gtk.ShortcutScope.GLOBAL)
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("<Ctrl>o"),
+                Gtk.CallbackAction.new(self._on_open_shortcut),
+            )
+        )
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("<Ctrl>w"),
+                Gtk.CallbackAction.new(self._on_close_shortcut),
+            )
+        )
         shortcuts.add_shortcut(
             Gtk.Shortcut.new(
                 Gtk.ShortcutTrigger.parse_string("<Ctrl>plus"),
@@ -347,11 +375,55 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _build_menu_model(self):
         menu = Gio.Menu()
-        about_action = Gio.SimpleAction.new("about", None)
-        about_action.connect("activate", self.on_about_activated)
-        self.add_action(about_action)
-        menu.append("_About Bounds", "win.about")
+        self._add_action("shortcuts", self.on_shortcuts_activated)
+        self._add_action("help", self.on_help_activated)
+        self._add_action("about", self.on_about_activated)
+
+        main_section = Gio.Menu()
+        main_section.append("_Keyboard Shortcuts", "win.shortcuts")
+        main_section.append("_Help", "win.help")
+        menu.append_section(None, main_section)
+
+        about_section = Gio.Menu()
+        about_section.append("_About Bounds", "win.about")
+        menu.append_section(None, about_section)
         return menu
+
+    def _add_action(self, name, callback):
+        action = Gio.SimpleAction.new(name, None)
+        action.connect("activate", callback)
+        self.add_action(action)
+
+    def on_shortcuts_activated(self, action, param):
+        dialog = Adw.ShortcutsDialog()
+
+        general = Adw.ShortcutsSection(title="General")
+        for title, trigger in (
+            ("Open PDF", "<primary>o"),
+            ("Close window", "<primary>w"),
+        ):
+            general.add(Adw.ShortcutsItem(title=title, accelerator=trigger))
+        dialog.add(general)
+
+        zoom = Adw.ShortcutsSection(title="Zoom")
+        for title, trigger in (
+            ("Zoom in", "<primary>plus"),
+            ("Zoom out", "<primary>minus"),
+            ("Fit width", "<primary>0"),
+        ):
+            zoom.add(Adw.ShortcutsItem(title=title, accelerator=trigger))
+        pan_item = Adw.ShortcutsItem(title="Pan")
+        pan_item.props.subtitle = "Middle click + drag"
+        zoom.add(pan_item)
+        dialog.add(zoom)
+
+        dialog.present()
+
+    def on_help_activated(self, action, param):
+        launcher = Gtk.UriLauncher.new(
+            "https://github.com/catoblepa/bounds"
+        )
+        launcher.launch(self, None, None, None)
 
     def on_about_activated(self, action, param):
         dialog = Adw.AboutDialog(
@@ -379,6 +451,14 @@ class MainWindow(Adw.ApplicationWindow):
     def on_open_clicked(self, btn):
         dialog = Gtk.FileDialog()
         dialog.open(self, None, self.on_file_dialog_finish)
+
+    def _on_open_shortcut(self, *args):
+        self.on_open_clicked(None)
+        return True
+
+    def _on_close_shortcut(self, *args):
+        self.close()
+        return True
 
     def on_file_dialog_finish(self, dialog, result):
         try:
@@ -436,6 +516,22 @@ class MainWindow(Adw.ApplicationWindow):
 
     def on_fit_width_clicked(self, btn):
         self.canvas.fit_to_width()
+
+    def on_pan_begin(self, gesture, x, y):
+        self.pan_hadj = self.document_scroll.get_hadjustment()
+        self.pan_vadj = self.document_scroll.get_vadjustment()
+        self.pan_h_start = self.pan_hadj.get_value()
+        self.pan_v_start = self.pan_vadj.get_value()
+        self.document_scroll.set_cursor_from_name("grabbing")
+
+    def on_pan_update(self, gesture, dx, dy):
+        if self.pan_hadj is not None:
+            self.pan_hadj.set_value(self.pan_h_start - dx)
+        if self.pan_vadj is not None:
+            self.pan_vadj.set_value(self.pan_v_start - dy)
+
+    def on_pan_end(self, gesture, x, y):
+        self.document_scroll.set_cursor_from_name("default")
 
     def _on_zoom_in_shortcut(self, *args):
         if self.canvas.page is not None:
