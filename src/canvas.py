@@ -19,6 +19,12 @@ class PDFCanvas(Gtk.DrawingArea):
         self.is_drawing = False
         self.bbox = None
 
+        self.pan_hadj = None
+        self.pan_vadj = None
+        self.pan_h_start = 0.0
+        self.pan_v_start = 0.0
+        self.is_panning = False
+
         self.on_selection_completed = None
         self.on_zoom_changed = None
 
@@ -28,6 +34,13 @@ class PDFCanvas(Gtk.DrawingArea):
         click_gesture.connect("pressed", self.on_press)
         click_gesture.connect("released", self.on_release)
         self.add_controller(click_gesture)
+
+        pan_gesture = Gtk.GestureDrag.new()
+        pan_gesture.set_button(2)
+        pan_gesture.connect("drag-begin", self.on_pan_begin)
+        pan_gesture.connect("drag-update", self.on_pan_update)
+        pan_gesture.connect("drag-end", self.on_pan_end)
+        self.add_controller(pan_gesture)
 
         motion_controller = Gtk.EventControllerMotion.new()
         motion_controller.connect("motion", self.on_motion)
@@ -76,11 +89,11 @@ class PDFCanvas(Gtk.DrawingArea):
         if parent is None:
             return
         hadj = parent.get_hadjustment()
-        avail = hadj.get_page_size() if hadj else parent.get_width()
-        if avail <= 0:
+        available = hadj.get_page_size() if hadj else parent.get_width()
+        if available <= 0:
             return
-        w, _ = self.page.get_size()
-        self.set_scale(avail / w)
+        page_width, _ = self.page.get_size()
+        self.set_scale(available / page_width)
         if hadj:
             hadj.set_value(0)
 
@@ -91,28 +104,34 @@ class PDFCanvas(Gtk.DrawingArea):
             return
 
         parent = self._get_scrolled_window()
-        hadj = None
-        vadj = None
-        if parent is not None:
-            hadj = parent.get_hadjustment()
-            vadj = parent.get_vadjustment()
-
-        hc = (hadj.get_value() + hadj.get_page_size() / 2.0) if hadj else 0.0
-        vc = (vadj.get_value() + vadj.get_page_size() / 2.0) if vadj else 0.0
+        hadj = parent.get_hadjustment() if parent else None
+        vadj = parent.get_vadjustment() if parent else None
+        h_center = (
+            hadj.get_value() + hadj.get_page_size() / 2.0 if hadj else 0.0
+        )
+        v_center = (
+            vadj.get_value() + vadj.get_page_size() / 2.0 if vadj else 0.0
+        )
 
         self.set_scale(new)
         ratio = new / old
 
         def restore_scroll():
             if hadj is not None:
-                upper = max(0.0, hadj.get_upper() - hadj.get_page_size())
+                maximum = max(0.0, hadj.get_upper() - hadj.get_page_size())
                 hadj.set_value(
-                    min(upper, max(0.0, hc * ratio - hadj.get_page_size() / 2.0))
+                    min(
+                        maximum,
+                        max(0.0, h_center * ratio - hadj.get_page_size() / 2.0),
+                    )
                 )
             if vadj is not None:
-                upper = max(0.0, vadj.get_upper() - vadj.get_page_size())
+                maximum = max(0.0, vadj.get_upper() - vadj.get_page_size())
                 vadj.set_value(
-                    min(upper, max(0.0, vc * ratio - vadj.get_page_size() / 2.0))
+                    min(
+                        maximum,
+                        max(0.0, v_center * ratio - vadj.get_page_size() / 2.0),
+                    )
                 )
             return False
 
@@ -121,9 +140,8 @@ class PDFCanvas(Gtk.DrawingArea):
     def on_scroll(self, controller, dx, dy):
         state = controller.get_current_event_state()
         if state & Gdk.ModifierType.CONTROL_MASK:
-            if dy != 0:
-                factor = 1.1 if dy < 0 else 1.0 / 1.1
-                self.zoom_about_center(factor)
+            if dy:
+                self.zoom_about_center(1.1 if dy < 0 else 1.0 / 1.1)
             return True
         return False
 
@@ -131,19 +149,18 @@ class PDFCanvas(Gtk.DrawingArea):
         if not self.doc:
             return
         self.page = self.doc.get_page(0)
+        self._layout_cache = None
         self.update_canvas_size()
         self.queue_draw()
 
     def update_canvas_size(self):
         if self.page:
-            w, h = self.page.get_size()
-            self.set_content_width(int(w * self.scale))
-            self.set_content_height(int(h * self.scale))
+            width, height = self.page.get_size()
+            self.set_content_width(int(width * self.scale))
+            self.set_content_height(int(height * self.scale))
 
     def get_page_size(self):
-        if self.page:
-            return self.page.get_size()
-        return None
+        return self.page.get_size() if self.page else None
 
     def extract_text(self, x0, top, x1, bottom):
         if not self.page:
@@ -168,39 +185,39 @@ class PDFCanvas(Gtk.DrawingArea):
     @staticmethod
     def _reconstruct_text(text, rects, x0, top, x1, bottom, tol=1.0):
         groups = {}
-        for ch, r in zip(text, rects):
-            if ch == "\n":
+        for char, rect in zip(text, rects):
+            if char == "\n":
                 continue
-            cx = (r.x1 + r.x2) / 2
-            cy = (r.y1 + r.y2) / 2
-            if x0 - tol <= cx <= x1 + tol and top - tol <= cy <= bottom + tol:
-                groups.setdefault(round(cy), []).append((ch, r))
-        if not groups:
-            return ""
-        out = []
-        for cy in sorted(groups):
-            chars = sorted(groups[cy], key=lambda cr: cr[1].x1)
-            s = ""
-            prev = None
-            for ch, r in chars:
-                if prev is not None and r.x1 - prev.x2 > 2.0:
-                    s += " "
-                s += ch
-                prev = r
-            out.append(s)
-        return "\n".join(out).rstrip()
+            center_x = (rect.x1 + rect.x2) / 2
+            center_y = (rect.y1 + rect.y2) / 2
+            if (
+                x0 - tol <= center_x <= x1 + tol
+                and top - tol <= center_y <= bottom + tol
+            ):
+                groups.setdefault(round(center_y), []).append((char, rect))
+
+        lines = []
+        for line in sorted(groups.values(), key=lambda chars: chars[0][1].y1):
+            chars = sorted(line, key=lambda item: item[1].x1)
+            output = ""
+            previous = None
+            for char, rect in chars:
+                if previous is not None and rect.x1 - previous.x2 > 2.0:
+                    output += " "
+                output += char
+                previous = rect
+            lines.append(output)
+        return "\n".join(lines).rstrip()
 
     def set_bbox(self, x0, top, x1, bottom):
         size = self.get_page_size()
         if size:
-            w, h = size
-            x0 = max(0.0, min(x0, w))
-            x1 = max(0.0, min(x1, w))
-            top = max(0.0, min(top, h))
-            bottom = max(0.0, min(bottom, h))
-        x0, x1 = min(x0, x1), max(x0, x1)
-        top, bottom = min(top, bottom), max(top, bottom)
-        self.bbox = (x0, top, x1, bottom)
+            page_width, page_height = size
+            x0 = max(0.0, min(x0, page_width))
+            x1 = max(0.0, min(x1, page_width))
+            top = max(0.0, min(top, page_height))
+            bottom = max(0.0, min(bottom, page_height))
+        self.bbox = (min(x0, x1), min(top, bottom), max(x0, x1), max(top, bottom))
         self.queue_draw()
 
     def on_draw(self, area, cr, width, height):
@@ -210,6 +227,7 @@ class PDFCanvas(Gtk.DrawingArea):
         cr.scale(self.scale, self.scale)
         self.page.render(cr)
 
+        bbox = self.bbox
         if self.is_drawing:
             bbox = (
                 min(self.start_x, self.curr_x) / self.scale,
@@ -217,30 +235,48 @@ class PDFCanvas(Gtk.DrawingArea):
                 max(self.start_x, self.curr_x) / self.scale,
                 max(self.start_y, self.curr_y) / self.scale,
             )
-        else:
-            bbox = self.bbox
-
         if bbox:
             cr.scale(1.0 / self.scale, 1.0 / self.scale)
-
             x0, top, x1, bottom = bbox
-            x = x0 * self.scale
-            y = top * self.scale
-            w = (x1 - x0) * self.scale
-            h = (bottom - top) * self.scale
-
             cr.set_source_rgba(0.9, 0.2, 0.2, 0.25)
-            cr.rectangle(x, y, w, h)
+            cr.rectangle(
+                x0 * self.scale,
+                top * self.scale,
+                (x1 - x0) * self.scale,
+                (bottom - top) * self.scale,
+            )
             cr.fill_preserve()
-
             cr.set_source_rgb(0.9, 0.1, 0.1)
             cr.set_line_width(1.5)
             cr.stroke()
 
     def on_press(self, gesture, n_press, x, y):
+        if gesture.get_current_button() != 1:
+            return
         self.start_x = self.curr_x = x
         self.start_y = self.curr_y = y
         self.is_drawing = True
+
+    def on_pan_begin(self, gesture, x, y):
+        parent = self._get_scrolled_window()
+        if parent is None:
+            return
+        self.pan_hadj = parent.get_hadjustment()
+        self.pan_vadj = parent.get_vadjustment()
+        self.pan_h_start = self.pan_hadj.get_value()
+        self.pan_v_start = self.pan_vadj.get_value()
+        self.is_panning = True
+        self.set_cursor_from_name("grabbing")
+
+    def on_pan_update(self, gesture, dx, dy):
+        if not self.is_panning:
+            return
+        self.pan_hadj.set_value(self.pan_h_start - dx)
+        self.pan_vadj.set_value(self.pan_v_start - dy)
+
+    def on_pan_end(self, gesture, x, y):
+        self.is_panning = False
+        self.set_cursor_from_name("default")
 
     def on_motion(self, controller, x, y):
         if self.is_drawing:
@@ -251,7 +287,6 @@ class PDFCanvas(Gtk.DrawingArea):
     def on_release(self, gesture, n_press, x, y):
         if not self.is_drawing:
             return
-
         self.is_drawing = False
         self.curr_x = x
         self.curr_y = y
@@ -261,12 +296,10 @@ class PDFCanvas(Gtk.DrawingArea):
         top = min(self.start_y, self.curr_y) / self.scale
         x1 = max(self.start_x, self.curr_x) / self.scale
         bottom = max(self.start_y, self.curr_y) / self.scale
-
-        if (x1 - x0) < 3 or (bottom - top) < 3:
+        if x1 - x0 < 3 or bottom - top < 3:
             return
 
         self.bbox = (x0, top, x1, bottom)
-        extracted_text = self.extract_text(x0, top, x1, bottom)
-
+        text = self.extract_text(x0, top, x1, bottom)
         if self.on_selection_completed:
-            self.on_selection_completed(x0, top, x1, bottom, extracted_text)
+            self.on_selection_completed(x0, top, x1, bottom, text)
