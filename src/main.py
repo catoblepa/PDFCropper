@@ -1,3 +1,5 @@
+import gettext
+import os
 import sys
 import gi
 
@@ -5,6 +7,13 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio
+
+_LOCALE_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"
+)
+gettext.bindtextdomain("bounds", _LOCALE_DIR)
+gettext.textdomain("bounds")
+
 from window import MainWindow
 
 

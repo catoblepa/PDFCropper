@@ -10,3 +10,4 @@ dependency('poppler-glib', version: '>= 0.18.0')
 
 subdir('data')
 subdir('src')
+subdir('po')

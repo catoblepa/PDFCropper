@@ -1,0 +1,128 @@
+# Italian translation for Bounds.
+# Copyright (C) 2026 catoblepa
+# This file is distributed under the same license as the Bounds package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: bounds 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/catoblepa/bounds\n"
+"POT-Creation-Date: 2026-08-08 00:00+0000\n"
+"PO-Revision-Date: 2026-08-08 00:00+0000\n"
+"Last-Translator: catoblepa <catoblepa@example.com>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Open PDF"
+msgstr "Apri PDF"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "Open a PDF"
+msgstr "Apri un PDF"
+
+msgid "Drag and drop documents here"
+msgstr "Trascina qui i documenti"
+
+msgid "Open…"
+msgstr "Apri…"
+
+msgid "Fit width"
+msgstr "Adatta alla larghezza"
+
+msgid "Zoom in"
+msgstr "Ingrandisci"
+
+msgid "Zoom out"
+msgstr "Riduci"
+
+msgid "Coordinate fields"
+msgstr "Campi coordinate"
+
+msgid "left"
+msgstr "sinistra"
+
+msgid "top"
+msgstr "alto"
+
+msgid "right"
+msgstr "destra"
+
+msgid "bottom"
+msgstr "basso"
+
+msgid "width"
+msgstr "larghezza"
+
+msgid "height"
+msgstr "altezza"
+
+msgid "Lock this coordinate"
+msgstr "Blocca questa coordinata"
+
+msgid "Extracted text"
+msgstr "Testo estratto"
+
+msgid "Copy extracted text"
+msgstr "Copia il testo estratto"
+
+msgid "Drag a box over the PDF to copy bounding box coordinates"
+msgstr "Trascina un rettangolo sul PDF per copiare le coordinate del riquadro"
+
+msgid "Coordinates"
+msgstr "Coordinate"
+
+msgid "Copy coordinates"
+msgstr "Copia le coordinate"
+
+msgid "_Keyboard Shortcuts"
+msgstr "_Scorciatoie da tastiera"
+
+msgid "_Help"
+msgstr "_Aiuto"
+
+msgid "_About Bounds"
+msgstr "_Informazioni su Bounds"
+
+msgid "General"
+msgstr "Generale"
+
+msgid "Close window"
+msgstr "Chiudi finestra"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Pan"
+msgstr "Trascina"
+
+msgid "Middle click + drag"
+msgstr "Clic centrale + trascina"
+
+msgid "Bounds"
+msgstr "Bounds"
+
+msgid "catoblepa"
+msgstr "catoblepa"
+
+msgid "Pick PDF bounding box coordinates visually for code extraction"
+msgstr "Seleziona visivamente le coordinate del riquadro di un PDF per l'estrazione del codice"
+
+msgid "(no text)"
+msgstr "(nessun testo)"
+
+msgid "Text copied to clipboard"
+msgstr "Testo copiato negli appunti"
+
+msgid "Coordinates copied to clipboard"
+msgstr "Coordinate copiate negli appunti"
+
+msgid "Pick PDF bounding box coordinates visually"
+msgstr "Seleziona visivamente le coordinate del riquadro di un PDF"
+
+msgid "Bounds is a lightweight developer utility to open a PDF, drag a visual box over any text region, and extract the text from that region along with its bounding box coordinates."
+msgstr "Bounds è un'utilità leggera per sviluppatori: apri un PDF, trascina un riquadro visivo su qualsiasi area di testo ed estrai il testo di quell'area insieme alle coordinate del suo riquadro di delimitazione."
