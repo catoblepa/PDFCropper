@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Bounds
+Comment=Pick PDF bounding box coordinates visually for code extraction
+Exec=bounds
+Icon=document-open-symbolic
+Terminal=false
+Type=Application
+Categories=Utility;Development;
+StartupNotify=true
