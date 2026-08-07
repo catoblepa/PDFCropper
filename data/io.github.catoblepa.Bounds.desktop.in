@@ -1,9 +1,10 @@
 [Desktop Entry]
 Name=Bounds
 Comment=Pick PDF bounding box coordinates visually for code extraction
-Exec=bounds
-Icon=document-open-symbolic
+Exec=bounds %U
+Icon=io.github.catoblepa.Bounds
 Terminal=false
 Type=Application
 Categories=Utility;Development;
+MimeType=application/pdf;
 StartupNotify=true

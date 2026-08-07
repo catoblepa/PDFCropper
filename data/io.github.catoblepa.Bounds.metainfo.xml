@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.catoblepa.Bounds</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Bounds</name>
+  <summary>Pick PDF bounding box coordinates visually</summary>
+  <description>
+    <p>Bounds is a lightweight developer utility to open a PDF, drag a visual box over any text region, and extract the text from that region along with its bounding box coordinates.</p>
+  </description>
+  <developer id="io.github.catoblepa">
+    <name>catoblepa</name>
+  </developer>
+  <launchable type="desktop-id">io.github.catoblepa.Bounds.desktop</launchable>
+  <provides>
+    <id>io.github.catoblepa.Bounds.desktop</id>
+  </provides>
+  <content_rating type="oars-1.1"/>
+  <categories>
+    <category>Utility</category>
+    <category>Development</category>
+  </categories>
+  <url type="homepage">https://github.com/catoblepa/bounds</url>
+</component>

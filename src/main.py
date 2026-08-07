@@ -4,18 +4,31 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw
+from gi.repository import Adw, Gio
 from window import MainWindow
 
 
 class BoundsApp(Adw.Application):
 
     def __init__(self):
-        super().__init__(application_id="io.github.catoblepa.Bounds")
+        super().__init__(
+            application_id="io.github.catoblepa.Bounds",
+            flags=Gio.ApplicationFlags.HANDLES_OPEN,
+        )
+        self.win = None
 
     def do_activate(self):
-        win = MainWindow(self)
-        win.present()
+        if self.win is None:
+            self.win = MainWindow(self)
+        self.win.present()
+
+    def do_open(self, files, n_files, hint):
+        self.do_activate()
+        for f in files:
+            path = f.get_path()
+            if path:
+                self.win.load_pdf_file(path)
+                break
 
 
 def main():

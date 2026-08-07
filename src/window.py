@@ -11,7 +11,7 @@ class MainWindow(Adw.ApplicationWindow):
 
     def __init__(self, app):
         super().__init__(application=app, title="Bounds")
-        self.set_default_size(1100, 750)
+        self.set_default_size(1000, 700)
 
         self.toast_overlay = Adw.ToastOverlay()
         self.set_content(self.toast_overlay)
