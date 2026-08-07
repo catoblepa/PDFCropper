@@ -61,19 +61,11 @@ class PDFCanvas(Gtk.DrawingArea):
         self._render_cache = None
         self.update_page()
 
-    def set_scale(self, scale_factor):
-        new_scale = max(0.5, min(scale_factor, 3.0))
-        if abs(new_scale - self.scale) < 0.001:
-            return
-        self.scale = new_scale
-        self._render_cache = None
-        self.update_canvas_size()
-        self.queue_draw()
-        if self.on_zoom_changed:
-            self.on_zoom_changed(self.scale)
-
-    def set_scale_unclamped(self, scale_factor):
-        new_scale = max(0.1, scale_factor)
+    def set_scale(self, scale_factor, clamp=True):
+        if clamp:
+            new_scale = max(0.5, min(scale_factor, 3.0))
+        else:
+            new_scale = max(0.1, scale_factor)
         if abs(new_scale - self.scale) < 0.001:
             return
         self.scale = new_scale
@@ -102,7 +94,7 @@ class PDFCanvas(Gtk.DrawingArea):
         if available <= 0:
             return
         page_width, _ = self.page.get_size()
-        self.set_scale_unclamped(available / page_width)
+        self.set_scale(available / page_width, clamp=False)
         if hadj:
             hadj.set_value(0)
 
@@ -405,26 +397,25 @@ class PDFCanvas(Gtk.DrawingArea):
             self.curr_y = y
             self.queue_draw()
 
+    def _commit_bbox(self):
+        self.set_cursor_from_name("default")
+        x0, top, x1, bottom = self.bbox
+        text = self.extract_text(x0, top, x1, bottom)
+        if self.on_selection_completed:
+            self.on_selection_completed(x0, top, x1, bottom, text)
+
     def on_release(self, gesture, n_press, x, y):
         if self.is_resizing:
             self.is_resizing = False
-            self.set_cursor_from_name("default")
             self._resize_to(x, y)
-            x0, top, x1, bottom = self.bbox
-            text = self.extract_text(x0, top, x1, bottom)
-            if self.on_selection_completed:
-                self.on_selection_completed(x0, top, x1, bottom, text)
+            self._commit_bbox()
             return
         if self.is_moving:
             self.is_moving = False
-            self.set_cursor_from_name("default")
             self.curr_x = x
             self.curr_y = y
             self._move_bbox_to(x, y)
-            x0, top, x1, bottom = self.bbox
-            text = self.extract_text(x0, top, x1, bottom)
-            if self.on_selection_completed:
-                self.on_selection_completed(x0, top, x1, bottom, text)
+            self._commit_bbox()
             return
         if not self.is_drawing:
             return
@@ -441,6 +432,4 @@ class PDFCanvas(Gtk.DrawingArea):
             return
 
         self.bbox = (x0, top, x1, bottom)
-        text = self.extract_text(x0, top, x1, bottom)
-        if self.on_selection_completed:
-            self.on_selection_completed(x0, top, x1, bottom, text)
+        self._commit_bbox()
