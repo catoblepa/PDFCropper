@@ -23,6 +23,9 @@ class PDFCanvas(Gtk.DrawingArea):
         self.move_start_x = 0
         self.move_start_y = 0
         self.move_bbox = None
+        self.is_resizing = False
+        self.resize_handle = None
+        self.resize_bbox = None
         self.bbox = None
 
         self.on_selection_completed = None
@@ -258,20 +261,103 @@ class PDFCanvas(Gtk.DrawingArea):
             )
         if bbox:
             x0, top, x1, bottom = bbox
-            cr.set_source_rgba(0.9, 0.2, 0.2, 0.25)
-            cr.rectangle(
+            px0, pt, px1, pb = (
                 x0 * self.scale,
                 top * self.scale,
-                (x1 - x0) * self.scale,
-                (bottom - top) * self.scale,
+                x1 * self.scale,
+                bottom * self.scale,
             )
+            cr.set_source_rgba(0.9, 0.2, 0.2, 0.25)
+            cr.rectangle(px0, pt, px1 - px0, pb - pt)
             cr.fill_preserve()
             cr.set_source_rgb(0.9, 0.1, 0.1)
             cr.set_line_width(1.5)
             cr.stroke()
 
+            handle = 6
+            cr.set_source_rgb(0.9, 0.1, 0.1)
+            for hx, hy in (
+                (px0, pt),
+                (px1, pt),
+                (px0, pb),
+                (px1, pb),
+                ((px0 + px1) / 2, pt),
+                ((px0 + px1) / 2, pb),
+                (px0, (pt + pb) / 2),
+                (px1, (pt + pb) / 2),
+            ):
+                cr.rectangle(hx - handle / 2, hy - handle / 2, handle, handle)
+                cr.fill()
+
+    def _handle_at(self, x, y, tol=8):
+        if self.bbox is None:
+            return None
+        x0, top, x1, bottom = self.bbox
+        px0, pt, px1, pb = (
+            x0 * self.scale,
+            top * self.scale,
+            x1 * self.scale,
+            bottom * self.scale,
+        )
+        near_left = abs(x - px0) <= tol
+        near_right = abs(x - px1) <= tol
+        near_top = abs(y - pt) <= tol
+        near_bottom = abs(y - pb) <= tol
+        if near_top and near_left:
+            return "nw"
+        if near_top and near_right:
+            return "ne"
+        if near_bottom and near_left:
+            return "sw"
+        if near_bottom and near_right:
+            return "se"
+        if near_top:
+            return "n"
+        if near_bottom:
+            return "s"
+        if near_left:
+            return "w"
+        if near_right:
+            return "e"
+        return None
+
+    def _resize_to(self, x, y, min_size=5.0):
+        orig_x0, orig_top, orig_x1, orig_bottom = self.resize_bbox
+        dx = (x - self.move_start_x) / self.scale
+        dy = (y - self.move_start_y) / self.scale
+
+        size = self.get_page_size()
+        if size:
+            page_width, page_height = size
+        else:
+            page_width, page_height = 1e9, 1e9
+
+        x0, top, x1, bottom = orig_x0, orig_top, orig_x1, orig_bottom
+        handle = self.resize_handle
+
+        if "w" in handle:
+            x0 = max(0.0, min(orig_x0 + dx, orig_x1 - min_size))
+        if "e" in handle:
+            x1 = min(page_width, max(orig_x1 + dx, orig_x0 + min_size))
+        if "n" in handle:
+            top = max(0.0, min(orig_top + dy, orig_bottom - min_size))
+        if "s" in handle:
+            bottom = min(page_height, max(orig_bottom + dy, orig_top + min_size))
+
+        self.bbox = (x0, top, x1, bottom)
+        self.queue_draw()
+
     def on_press(self, gesture, n_press, x, y):
         if gesture.get_current_button() != 1:
+            return
+        handle = self._handle_at(x, y)
+        if handle is not None:
+            self.is_resizing = True
+            self.resize_handle = handle
+            self.resize_bbox = self.bbox
+            self.move_start_x = x
+            self.move_start_y = y
+            self.set_cursor_from_name("default")
             return
         if self.bbox is not None and self._point_in_bbox(x, y):
             self.is_moving = True
@@ -310,7 +396,9 @@ class PDFCanvas(Gtk.DrawingArea):
         self.queue_draw()
 
     def on_motion(self, controller, x, y):
-        if self.is_moving:
+        if self.is_resizing:
+            self._resize_to(x, y)
+        elif self.is_moving:
             self._move_bbox_to(x, y)
         elif self.is_drawing:
             self.curr_x = x
@@ -318,6 +406,15 @@ class PDFCanvas(Gtk.DrawingArea):
             self.queue_draw()
 
     def on_release(self, gesture, n_press, x, y):
+        if self.is_resizing:
+            self.is_resizing = False
+            self.set_cursor_from_name("default")
+            self._resize_to(x, y)
+            x0, top, x1, bottom = self.bbox
+            text = self.extract_text(x0, top, x1, bottom)
+            if self.on_selection_completed:
+                self.on_selection_completed(x0, top, x1, bottom, text)
+            return
         if self.is_moving:
             self.is_moving = False
             self.set_cursor_from_name("default")
