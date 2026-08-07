@@ -1,5 +1,5 @@
 {
-  "app-id": "io.github.catoblepa.Bounds",
+  "app-id": "io.github.catoblepa.PDFBounds",
   "runtime": "org.gnome.Platform",
   "runtime-version": "50",
   "sdk": "org.gnome.Sdk",

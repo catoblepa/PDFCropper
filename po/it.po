@@ -1,14 +1,14 @@
-# Italian translation for Bounds.
+# Italian translation for PDF Bounds.
 # Copyright (C) 2026 catoblepa
-# This file is distributed under the same license as the Bounds package.
+# This file is distributed under the same license as the PDF Bounds package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: bounds 0.1.0\n"
-"Report-Msgid-Bugs-To: https://github.com/catoblepa/bounds\n"
+"Project-Id-Version: pdf-bounds 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/catoblepa/PDFBounds\n"
 "POT-Creation-Date: 2026-08-08 00:00+0000\n"
 "PO-Revision-Date: 2026-08-08 00:00+0000\n"
-"Last-Translator: catoblepa <catoblepa@example.com>\n"
+"Last-Translator: Davide Truffa <davide.truffa@gmail.com>\n"
 "Language-Team: Italian\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -85,8 +85,8 @@ msgstr "_Scorciatoie da tastiera"
 msgid "_Help"
 msgstr "_Aiuto"
 
-msgid "_About Bounds"
-msgstr "_Informazioni su Bounds"
+msgid "_About PDF Bounds"
+msgstr "_Informazioni su PDF Bounds"
 
 msgid "General"
 msgstr "Generale"
@@ -103,14 +103,14 @@ msgstr "Trascina"
 msgid "Middle click + drag"
 msgstr "Clic centrale + trascina"
 
-msgid "Bounds"
-msgstr "Bounds"
+msgid "PDF Bounds"
+msgstr "PDF Bounds"
+
+msgid "PDF bounding box extractor"
+msgstr "Estrattore di riquadri di delimitazione di PDF"
 
 msgid "catoblepa"
 msgstr "catoblepa"
-
-msgid "Pick PDF bounding box coordinates visually for code extraction"
-msgstr "Seleziona visivamente le coordinate del riquadro di un PDF per l'estrazione del codice"
 
 msgid "(no text)"
 msgstr "(nessun testo)"
@@ -127,5 +127,5 @@ msgstr "Impossibile aprire il file"
 msgid "Pick PDF bounding box coordinates visually"
 msgstr "Seleziona visivamente le coordinate del riquadro di un PDF"
 
-msgid "Bounds is a lightweight developer utility to open a PDF, drag a visual box over any text region, and extract the text from that region along with its bounding box coordinates."
-msgstr "Bounds è un'utilità leggera per sviluppatori: apri un PDF, trascina un riquadro visivo su qualsiasi area di testo ed estrai il testo di quell'area insieme alle coordinate del suo riquadro di delimitazione."
+msgid "PDF Bounds is a lightweight developer utility to open a PDF, drag a visual box over any text region, and extract the text from that region along with its bounding box coordinates."
+msgstr "PDF Bounds è un'utilità leggera per sviluppatori: apri un PDF, trascina un riquadro visivo su qualsiasi area di testo ed estrai il testo di quell'area insieme alle coordinate del suo riquadro di delimitazione."

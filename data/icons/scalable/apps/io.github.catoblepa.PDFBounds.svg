@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Semplice ombra esterna morbida in stile Libadwaita -->
+    <filter id="page-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#000000" flood-opacity="0.16"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <!-- Foglio PDF Base -->
+  <g filter="url(#page-shadow)">
+    <!-- Bordo di spessore del foglio (grigio chiaro) -->
+    <rect x="100" y="52" width="312" height="408" rx="36" ry="36" fill="#c0bfbc"/>
+    <!-- Foglio Bianco -->
+    <rect x="100" y="44" width="312" height="408" rx="36" ry="36" fill="#ffffff"/>
+  </g>
+
+  <!-- Badge PDF / Intestazione in alto a sinistra (Blu Adwaita) -->
+  <path d="M 136 44 L 208 44 C 208 44 216 44 216 54 L 216 72 C 216 82 208 84 198 84 L 136 84 Z" fill="#1c71d8"/>
+
+  <!-- Blocco Righe di Testo Stilizzate (Molto piene e spesse per leggibilità a 16px-32px) -->
+  <g id="text-blocks">
+    <!-- Riga top -->
+    <rect x="156" y="132" width="200" height="28" rx="14" fill="#deddda"/>
+    <!-- Riga centrale evidenziata in giallo (Focus area) -->
+    <rect x="156" y="184" width="200" height="36" rx="12" fill="#f6d32d"/>
+    <!-- Riga sotto l'evidenziazione -->
+    <rect x="156" y="244" width="200" height="28" rx="14" fill="#deddda"/>
+    <!-- Riga fondo -->
+    <rect x="156" y="296" width="140" height="28" rx="14" fill="#deddda"/>
+  </g>
+
+  <!-- Cornice Bounding Box (Rosso Adwaita #e01b24) -->
+  <!-- Bordo spesso e definito, chiaramente visibile anche in dimensioni piccolissime -->
+  <rect x="138" y="166" width="236" height="110" rx="10" fill="none" stroke="#e01b24" stroke-width="12" stroke-linejoin="round"/>
+
+  <!-- Quadratini / Maniglie di ridimensionamento (Grandi e ben separati) -->
+  <g fill="#e01b24">
+    <!-- Angoli -->
+    <rect x="126" y="154" width="24" height="24" rx="6"/>
+    <rect x="362" y="154" width="24" height="24" rx="6"/>
+    <rect x="126" y="264" width="24" height="24" rx="6"/>
+    <rect x="362" y="264" width="24" height="24" rx="6"/>
+
+    <!-- Punti centrali -->
+    <rect x="244" y="154" width="24" height="24" rx="6"/>
+    <rect x="244" y="264" width="24" height="24" rx="6"/>
+    <rect x="126" y="209" width="24" height="24" rx="6"/>
+    <rect x="362" y="209" width="24" height="24" rx="6"/>
+  </g>
+
+  <!-- Cursore di selezione / puntatore (Blu Adwaita #1c71d8 con contorno bianco netto) -->
+  <g>
+    <!-- Tratto esterno bianco per stacco nitido -->
+    <path d="M 374 276 L 434 336 L 404 346 L 424 386 L 400 398 L 380 358 L 358 376 Z" fill="#ffffff" stroke="#ffffff" stroke-width="8" stroke-linejoin="round"/>
+    <!-- Cursore effettivo -->
+    <path d="M 374 276 L 434 336 L 404 346 L 424 386 L 400 398 L 380 358 L 358 376 Z" fill="#1c71d8" stroke="#1c71d8" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+</svg>

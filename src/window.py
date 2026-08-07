@@ -11,7 +11,7 @@ from canvas import PDFCanvas
 class MainWindow(Adw.ApplicationWindow):
 
     def __init__(self, app):
-        super().__init__(application=app, title="Bounds")
+        super().__init__(application=app, title=_("PDF Bounds"))
         self.set_default_size(1000, 700)
 
         self.toast_overlay = Adw.ToastOverlay()
@@ -53,7 +53,9 @@ class MainWindow(Adw.ApplicationWindow):
         self.header_bar = Adw.HeaderBar()
         self.main_box.append(self.header_bar)
 
-        self.window_title = Adw.WindowTitle(title="Bounds")
+        self.window_title = Adw.WindowTitle(
+            title=_("PDF Bounds"), subtitle=_("PDF bounding box extractor")
+        )
         self.header_bar.set_title_widget(self.window_title)
 
         btn_open = Gtk.Button(icon_name="document-open-symbolic")
@@ -387,7 +389,7 @@ class MainWindow(Adw.ApplicationWindow):
         menu.append_section(None, main_section)
 
         about_section = Gio.Menu()
-        about_section.append(_("_About Bounds"), "win.about")
+        about_section.append(_("_About PDF Bounds"), "win.about")
         menu.append_section(None, about_section)
         return menu
 
@@ -423,20 +425,18 @@ class MainWindow(Adw.ApplicationWindow):
 
     def on_help_activated(self, action, param):
         launcher = Gtk.UriLauncher.new(
-            "https://github.com/catoblepa/bounds"
+            "https://github.com/catoblepa/PDFBounds"
         )
         launcher.launch(self, None, None, None)
 
     def on_about_activated(self, action, param):
         dialog = Adw.AboutDialog(
-            application_name=_("Bounds"),
-            application_icon="io.github.catoblepa.Bounds",
+            application_name=_("PDF Bounds"),
+            application_icon="io.github.catoblepa.PDFBounds",
             version="0.1.0",
             developer_name=_("catoblepa"),
             license_type=Gtk.License.GPL_3_0,
-            comments=_(
-                "Pick PDF bounding box coordinates visually for code extraction"
-            ),
+            comments=_("PDF bounding box extractor"),
         )
         dialog.present(self)
 
@@ -490,7 +490,7 @@ class MainWindow(Adw.ApplicationWindow):
             return
         self.stack.set_visible_child_name("content")
         filename = path.split("/")[-1]
-        self.window_title.set_title(f"{filename} - Bounds")
+        self.window_title.set_title(f"{filename} - {_('PDF Bounds')}")
         self.btn_fit_width.set_sensitive(True)
         self.on_zoom_changed(self.canvas.scale)
         if self.get_width() > 0:

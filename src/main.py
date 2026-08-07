@@ -21,7 +21,7 @@ class BoundsApp(Adw.Application):
 
     def __init__(self):
         super().__init__(
-            application_id="io.github.catoblepa.Bounds",
+            application_id="io.github.catoblepa.PDFBounds",
             flags=Gio.ApplicationFlags.HANDLES_OPEN,
         )
         self.win = None
