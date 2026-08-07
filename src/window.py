@@ -3,7 +3,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gtk, Pango
+from gi.repository import Adw, Gdk, Gio, Gtk, Pango
 from canvas import PDFCanvas
 
 
@@ -19,13 +19,40 @@ class MainWindow(Adw.ApplicationWindow):
         self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.toast_overlay.set_child(self.main_box)
 
+        css = Gtk.CssProvider()
+        css.load_from_string(
+            """
+            .zoom-overlay {
+                background-color: transparent;
+                border-radius: 9999px;
+                padding: 4px;
+            }
+            .zoom-overlay button.circular {
+                background-color: rgba(60, 60, 60, 0.85);
+                color: white;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            }
+            .zoom-overlay button.circular:hover {
+                background-color: rgba(80, 80, 80, 0.9);
+            }
+            .zoom-overlay button.circular:active {
+                background-color: rgba(40, 40, 40, 0.9);
+            }
+            .zoom-overlay button.circular:disabled {
+                background-color: rgba(60, 60, 60, 0.35);
+                color: alpha(white, 0.5);
+            }
+            """
+        )
+        Gtk.StyleContext.add_provider_for_display(
+            self.get_display(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
         # HeaderBar
         self.header_bar = Adw.HeaderBar()
         self.main_box.append(self.header_bar)
 
-        self.window_title = Adw.WindowTitle(
-            title="Bounds", subtitle="PDF bounding box extractor"
-        )
+        self.window_title = Adw.WindowTitle(title="Bounds")
         self.header_bar.set_title_widget(self.window_title)
 
         btn_open = Gtk.Button(icon_name="document-open-symbolic")
@@ -33,19 +60,12 @@ class MainWindow(Adw.ApplicationWindow):
         btn_open.connect("clicked", self.on_open_clicked)
         self.header_bar.pack_start(btn_open)
 
-        btn_zoom_out = Gtk.Button(icon_name="zoom-out-symbolic")
-        btn_zoom_out.set_tooltip_text("Zoom out (Ctrl+Scroll)")
-        btn_zoom_out.connect("clicked", self.on_zoom_out_clicked)
-        self.header_bar.pack_start(btn_zoom_out)
-
-        self.lbl_zoom = Gtk.Label(label="100%")
-        self.lbl_zoom.add_css_class("dim-label")
-        self.header_bar.pack_start(self.lbl_zoom)
-
-        btn_zoom_in = Gtk.Button(icon_name="zoom-in-symbolic")
-        btn_zoom_in.set_tooltip_text("Zoom in (Ctrl+Scroll)")
-        btn_zoom_in.connect("clicked", self.on_zoom_in_clicked)
-        self.header_bar.pack_start(btn_zoom_in)
+        # Sandwich menu
+        self.menu_btn = Gtk.MenuButton()
+        self.menu_btn.set_icon_name("open-menu-symbolic")
+        self.menu_btn.set_tooltip_text("Menu")
+        self.menu_btn.set_menu_model(self._build_menu_model())
+        self.header_bar.pack_end(self.menu_btn)
 
         # Paned canvas | side panel (always visible)
         self.paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
@@ -58,7 +78,6 @@ class MainWindow(Adw.ApplicationWindow):
         # Left: Stack (Empty status page vs Canvas)
         self.stack = Gtk.Stack()
         self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
-        self.paned.set_start_child(self.stack)
 
         self.status_page = Adw.StatusPage(
             title="Open a PDF",
@@ -81,6 +100,44 @@ class MainWindow(Adw.ApplicationWindow):
         scroll.set_child(self.canvas)
         self.stack.add_named(scroll, "content")
         self.stack.set_visible_child_name("empty")
+
+        # Floating zoom toolbar (Papers style) over the content area
+        self.canvas_overlay = Gtk.Overlay()
+        self.canvas_overlay.set_child(self.stack)
+
+        zoom_toolbar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        zoom_toolbar.add_css_class("zoom-overlay")
+        zoom_toolbar.set_halign(Gtk.Align.END)
+        zoom_toolbar.set_valign(Gtk.Align.END)
+        zoom_toolbar.set_margin_end(12)
+        zoom_toolbar.set_margin_bottom(12)
+
+        self.btn_fit_width = Gtk.Button(icon_name="zoom-fit-best-symbolic")
+        self.btn_fit_width.add_css_class("circular")
+        self.btn_fit_width.add_css_class("card")
+        self.btn_fit_width.set_tooltip_text("Fit width")
+        self.btn_fit_width.connect("clicked", self.on_fit_width_clicked)
+        self.btn_fit_width.set_sensitive(False)
+        zoom_toolbar.append(self.btn_fit_width)
+
+        self.btn_zoom_in = Gtk.Button(icon_name="zoom-in-symbolic")
+        self.btn_zoom_in.add_css_class("circular")
+        self.btn_zoom_in.add_css_class("card")
+        self.btn_zoom_in.set_tooltip_text("Zoom in (Ctrl+Scroll)")
+        self.btn_zoom_in.connect("clicked", self.on_zoom_in_clicked)
+        self.btn_zoom_in.set_sensitive(False)
+        zoom_toolbar.append(self.btn_zoom_in)
+
+        self.btn_zoom_out = Gtk.Button(icon_name="zoom-out-symbolic")
+        self.btn_zoom_out.add_css_class("circular")
+        self.btn_zoom_out.add_css_class("card")
+        self.btn_zoom_out.set_tooltip_text("Zoom out (Ctrl+Scroll)")
+        self.btn_zoom_out.connect("clicked", self.on_zoom_out_clicked)
+        self.btn_zoom_out.set_sensitive(False)
+        zoom_toolbar.append(self.btn_zoom_out)
+
+        self.canvas_overlay.add_overlay(zoom_toolbar)
+        self.paned.set_start_child(self.canvas_overlay)
 
         # Right: side panel
         side_scroll = Gtk.ScrolledWindow()
@@ -260,10 +317,52 @@ class MainWindow(Adw.ApplicationWindow):
         drop_target.connect("drop", self.on_file_dropped)
         self.add_controller(drop_target)
 
+        # Keyboard shortcuts (HIG: Ctrl++, Ctrl+-, Ctrl+0)
+        shortcuts = Gtk.ShortcutController()
+        shortcuts.set_scope(Gtk.ShortcutScope.GLOBAL)
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("<Ctrl>plus"),
+                Gtk.CallbackAction.new(self._on_zoom_in_shortcut),
+            )
+        )
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("<Ctrl>minus"),
+                Gtk.CallbackAction.new(self._on_zoom_out_shortcut),
+            )
+        )
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("<Ctrl>0"),
+                Gtk.CallbackAction.new(self._on_fit_width_shortcut),
+            )
+        )
+        self.add_controller(shortcuts)
+
         self._updating_spins = False
         self._extracted_text = ""
         self._current_coords = ""
         self._spin_to_key = {s: k for k, s in self.coord_spins.items()}
+
+    def _build_menu_model(self):
+        menu = Gio.Menu()
+        about_action = Gio.SimpleAction.new("about", None)
+        about_action.connect("activate", self.on_about_activated)
+        self.add_action(about_action)
+        menu.append("_About Bounds", "win.about")
+        return menu
+
+    def on_about_activated(self, action, param):
+        dialog = Adw.AboutDialog(
+            application_name="Bounds",
+            application_icon="io.github.catoblepa.Bounds",
+            version="0.1.0",
+            developer_name="catoblepa",
+            license_type=Gtk.License.GPL_3_0,
+            comments="Pick PDF bounding box coordinates visually for code extraction",
+        )
+        dialog.present(self)
 
     def on_lock_toggled(self, btn, key):
         if btn.get_active():
@@ -301,7 +400,8 @@ class MainWindow(Adw.ApplicationWindow):
         self.canvas.load_pdf(path)
         self.stack.set_visible_child_name("content")
         filename = path.split("/")[-1]
-        self.window_title.set_subtitle(filename)
+        self.window_title.set_title(f"{filename} - Bounds")
+        self.btn_fit_width.set_sensitive(True)
         self.on_zoom_changed(self.canvas.scale)
         if self.get_width() > 0:
             self.paned.set_position(self.get_width() - 320)
@@ -324,13 +424,32 @@ class MainWindow(Adw.ApplicationWindow):
         self._extracted_text = ""
 
     def on_zoom_changed(self, scale):
-        self.lbl_zoom.set_text(f"{round(scale * 100)}%")
+        self.btn_zoom_in.set_sensitive(self.canvas.page is not None and scale < 3.0)
+        self.btn_zoom_out.set_sensitive(self.canvas.page is not None and scale > 0.5)
 
     def on_zoom_in_clicked(self, btn):
         self.canvas.zoom_about_center(1.1)
 
     def on_zoom_out_clicked(self, btn):
         self.canvas.zoom_about_center(1.0 / 1.1)
+
+    def on_fit_width_clicked(self, btn):
+        self.canvas.fit_to_width()
+
+    def _on_zoom_in_shortcut(self, *args):
+        if self.canvas.page is not None:
+            self.canvas.zoom_about_center(1.1)
+        return True
+
+    def _on_zoom_out_shortcut(self, *args):
+        if self.canvas.page is not None:
+            self.canvas.zoom_about_center(1.0 / 1.1)
+        return True
+
+    def _on_fit_width_shortcut(self, *args):
+        if self.canvas.page is not None:
+            self.canvas.fit_to_width()
+        return True
 
     @staticmethod
     def _solve_axis(values, changed, locks):

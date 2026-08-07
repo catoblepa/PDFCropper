@@ -61,16 +61,39 @@ class PDFCanvas(Gtk.DrawingArea):
         if self.on_zoom_changed:
             self.on_zoom_changed(self.scale)
 
+    def _get_scrolled_window(self):
+        widget = self.get_parent()
+        while widget is not None:
+            if isinstance(widget, Gtk.ScrolledWindow):
+                return widget
+            widget = widget.get_parent()
+        return None
+
+    def fit_to_width(self):
+        if not self.page:
+            return
+        parent = self._get_scrolled_window()
+        if parent is None:
+            return
+        hadj = parent.get_hadjustment()
+        avail = hadj.get_page_size() if hadj else parent.get_width()
+        if avail <= 0:
+            return
+        w, _ = self.page.get_size()
+        self.set_scale(avail / w)
+        if hadj:
+            hadj.set_value(0)
+
     def zoom_about_center(self, factor):
         old = self.scale
         new = max(0.5, min(old * factor, 3.0))
         if abs(new - old) < 0.001:
             return
 
-        parent = self.get_parent()
+        parent = self._get_scrolled_window()
         hadj = None
         vadj = None
-        if isinstance(parent, Gtk.ScrolledWindow):
+        if parent is not None:
             hadj = parent.get_hadjustment()
             vadj = parent.get_vadjustment()
 
