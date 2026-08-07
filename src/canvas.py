@@ -19,6 +19,10 @@ class PDFCanvas(Gtk.DrawingArea):
 
         self.start_x = self.start_y = self.curr_x = self.curr_y = 0
         self.is_drawing = False
+        self.is_moving = False
+        self.move_start_x = 0
+        self.move_start_y = 0
+        self.move_bbox = None
         self.bbox = None
 
         self.on_selection_completed = None
@@ -269,17 +273,62 @@ class PDFCanvas(Gtk.DrawingArea):
     def on_press(self, gesture, n_press, x, y):
         if gesture.get_current_button() != 1:
             return
+        if self.bbox is not None and self._point_in_bbox(x, y):
+            self.is_moving = True
+            self.move_start_x = x
+            self.move_start_y = y
+            self.move_bbox = self.bbox
+            self.set_cursor_from_name("move")
+            return
         self.start_x = self.curr_x = x
         self.start_y = self.curr_y = y
         self.is_drawing = True
 
+    def _point_in_bbox(self, x, y):
+        x0, top, x1, bottom = self.bbox
+        return (
+            x0 * self.scale <= x <= x1 * self.scale
+            and top * self.scale <= y <= bottom * self.scale
+        )
+
+    def _move_bbox_to(self, x, y):
+        dx = (x - self.move_start_x) / self.scale
+        dy = (y - self.move_start_y) / self.scale
+        orig_x0, orig_top, orig_x1, orig_bottom = self.move_bbox
+        width = orig_x1 - orig_x0
+        height = orig_bottom - orig_top
+
+        size = self.get_page_size()
+        if size:
+            page_width, page_height = size
+            x0 = max(0.0, min(orig_x0 + dx, page_width - width))
+            top = max(0.0, min(orig_top + dy, page_height - height))
+        else:
+            x0 = orig_x0 + dx
+            top = orig_top + dy
+        self.bbox = (x0, top, x0 + width, top + height)
+        self.queue_draw()
+
     def on_motion(self, controller, x, y):
-        if self.is_drawing:
+        if self.is_moving:
+            self._move_bbox_to(x, y)
+        elif self.is_drawing:
             self.curr_x = x
             self.curr_y = y
             self.queue_draw()
 
     def on_release(self, gesture, n_press, x, y):
+        if self.is_moving:
+            self.is_moving = False
+            self.set_cursor_from_name("default")
+            self.curr_x = x
+            self.curr_y = y
+            self._move_bbox_to(x, y)
+            x0, top, x1, bottom = self.bbox
+            text = self.extract_text(x0, top, x1, bottom)
+            if self.on_selection_completed:
+                self.on_selection_completed(x0, top, x1, bottom, text)
+            return
         if not self.is_drawing:
             return
         self.is_drawing = False
