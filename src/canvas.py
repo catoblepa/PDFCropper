@@ -4,6 +4,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Poppler", "0.18")
 from gi.repository import Gdk, Gtk, Poppler, GLib
+import cairo
 
 
 class PDFCanvas(Gtk.DrawingArea):
@@ -14,6 +15,7 @@ class PDFCanvas(Gtk.DrawingArea):
         self.page = None
         self.scale = 1.0
         self._layout_cache = None
+        self._render_cache = None
 
         self.start_x = self.start_y = self.curr_x = self.curr_y = 0
         self.is_drawing = False
@@ -49,6 +51,7 @@ class PDFCanvas(Gtk.DrawingArea):
         self.bbox = None
         self.scale = 1.0
         self._layout_cache = None
+        self._render_cache = None
         self.update_page()
 
     def set_scale(self, scale_factor):
@@ -56,6 +59,7 @@ class PDFCanvas(Gtk.DrawingArea):
         if abs(new_scale - self.scale) < 0.001:
             return
         self.scale = new_scale
+        self._render_cache = None
         self.update_canvas_size()
         self.queue_draw()
         if self.on_zoom_changed:
@@ -66,6 +70,7 @@ class PDFCanvas(Gtk.DrawingArea):
         if abs(new_scale - self.scale) < 0.001:
             return
         self.scale = new_scale
+        self._render_cache = None
         self.update_canvas_size()
         self.queue_draw()
         if self.on_zoom_changed:
@@ -147,6 +152,7 @@ class PDFCanvas(Gtk.DrawingArea):
             return
         self.page = self.doc.get_page(0)
         self._layout_cache = None
+        self._render_cache = None
         self.update_canvas_size()
         self.queue_draw()
 
@@ -217,12 +223,26 @@ class PDFCanvas(Gtk.DrawingArea):
         self.bbox = (min(x0, x1), min(top, bottom), max(x0, x1), max(top, bottom))
         self.queue_draw()
 
+    def _get_render_cache(self):
+        if self._render_cache is None and self.page is not None:
+            width, height = self.page.get_size()
+            iw = max(1, int(width * self.scale))
+            ih = max(1, int(height * self.scale))
+            surface = cairo.ImageSurface(cairo.Format.ARGB32, iw, ih)
+            context = cairo.Context(surface)
+            context.scale(self.scale, self.scale)
+            self.page.render(context)
+            self._render_cache = surface
+        return self._render_cache
+
     def on_draw(self, area, cr, width, height):
         if not self.page:
             return
 
-        cr.scale(self.scale, self.scale)
-        self.page.render(cr)
+        surface = self._get_render_cache()
+        if surface is not None:
+            cr.set_source_surface(surface, 0, 0)
+            cr.paint()
 
         bbox = self.bbox
         if self.is_drawing:
@@ -233,7 +253,6 @@ class PDFCanvas(Gtk.DrawingArea):
                 max(self.start_y, self.curr_y) / self.scale,
             )
         if bbox:
-            cr.scale(1.0 / self.scale, 1.0 / self.scale)
             x0, top, x1, bottom = bbox
             cr.set_source_rgba(0.9, 0.2, 0.2, 0.25)
             cr.rectangle(
