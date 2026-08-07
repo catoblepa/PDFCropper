@@ -16,25 +16,17 @@ class MainWindow(Adw.ApplicationWindow):
         self.toast_overlay = Adw.ToastOverlay()
         self.set_content(self.toast_overlay)
 
-        css = Gtk.CssProvider()
-        css.load_from_string(
-            """
-            .bounds-status-button {
-                padding: 10px 24px;
-                min-height: 36px;
-            }
-            """
-        )
-        Gtk.StyleContext.add_provider_for_display(
-            self.get_display(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
-
         self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.toast_overlay.set_child(self.main_box)
 
         # HeaderBar
         self.header_bar = Adw.HeaderBar()
         self.main_box.append(self.header_bar)
+
+        self.window_title = Adw.WindowTitle(
+            title="Bounds", subtitle="PDF bounding box extractor"
+        )
+        self.header_bar.set_title_widget(self.window_title)
 
         btn_open = Gtk.Button(icon_name="document-open-symbolic")
         btn_open.set_tooltip_text("Open PDF")
@@ -69,13 +61,13 @@ class MainWindow(Adw.ApplicationWindow):
         self.paned.set_start_child(self.stack)
 
         self.status_page = Adw.StatusPage(
-            title="No PDF Loaded",
-            description="Open a PDF document or drag it here to pick coordinates",
-            icon_name="document-open-symbolic",
+            title="Open a PDF",
+            description="Drag and drop documents here",
+            icon_name="x-office-document-symbolic",
         )
-        btn_status_open = Gtk.Button(label="Open PDF")
+        btn_status_open = Gtk.Button(label="Open…")
         btn_status_open.add_css_class("suggested-action")
-        btn_status_open.add_css_class("bounds-status-button")
+        btn_status_open.add_css_class("pill")
         btn_status_open.set_halign(Gtk.Align.CENTER)
         btn_status_open.set_valign(Gtk.Align.CENTER)
         btn_status_open.connect("clicked", self.on_open_clicked)
@@ -117,7 +109,7 @@ class MainWindow(Adw.ApplicationWindow):
         coord_card.set_child(coord_box)
         self.side_box.append(coord_card)
 
-        coord_header = Gtk.Label(label="Coordinates")
+        coord_header = Gtk.Label(label="Coordinate fields")
         coord_header.set_halign(Gtk.Align.START)
         coord_header.add_css_class("heading")
         coord_box.append(coord_header)
@@ -179,7 +171,7 @@ class MainWindow(Adw.ApplicationWindow):
         text_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         text_box.set_margin_start(14)
         text_box.set_margin_end(14)
-        text_box.set_margin_top(12)
+        text_box.set_margin_top(6)
         text_box.set_margin_bottom(12)
         text_card.set_child(text_box)
 
@@ -230,7 +222,7 @@ class MainWindow(Adw.ApplicationWindow):
         coord_display_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         coord_display_box.set_margin_start(14)
         coord_display_box.set_margin_end(14)
-        coord_display_box.set_margin_top(12)
+        coord_display_box.set_margin_top(6)
         coord_display_box.set_margin_bottom(12)
         coord_display_card.set_child(coord_display_box)
 
@@ -309,7 +301,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.canvas.load_pdf(path)
         self.stack.set_visible_child_name("content")
         filename = path.split("/")[-1]
-        self.set_subtitle(filename)
+        self.window_title.set_subtitle(filename)
         self.on_zoom_changed(self.canvas.scale)
         if self.get_width() > 0:
             self.paned.set_position(self.get_width() - 320)
