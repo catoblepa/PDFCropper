@@ -121,6 +121,9 @@ msgstr "Testo copiato negli appunti"
 msgid "Coordinates copied to clipboard"
 msgstr "Coordinate copiate negli appunti"
 
+msgid "Unable to open the file"
+msgstr "Impossibile aprire il file"
+
 msgid "Pick PDF bounding box coordinates visually"
 msgstr "Seleziona visivamente le coordinate del riquadro di un PDF"
 

@@ -61,6 +61,16 @@ class PDFCanvas(Gtk.DrawingArea):
         if self.on_zoom_changed:
             self.on_zoom_changed(self.scale)
 
+    def set_scale_unclamped(self, scale_factor):
+        new_scale = max(0.1, scale_factor)
+        if abs(new_scale - self.scale) < 0.001:
+            return
+        self.scale = new_scale
+        self.update_canvas_size()
+        self.queue_draw()
+        if self.on_zoom_changed:
+            self.on_zoom_changed(self.scale)
+
     def _get_scrolled_window(self):
         widget = self.get_parent()
         while widget is not None:
@@ -80,7 +90,7 @@ class PDFCanvas(Gtk.DrawingArea):
         if available <= 0:
             return
         page_width, _ = self.page.get_size()
-        self.set_scale(available / page_width)
+        self.set_scale_unclamped(available / page_width)
         if hadj:
             hadj.set_value(0)
 

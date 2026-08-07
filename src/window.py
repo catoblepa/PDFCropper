@@ -372,6 +372,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._updating_spins = False
         self._extracted_text = ""
         self._current_coords = ""
+        self._fit_width_pending = None
         self._spin_to_key = {s: k for k, s in self.coord_spins.items()}
 
     def _build_menu_model(self):
@@ -480,7 +481,13 @@ class MainWindow(Adw.ApplicationWindow):
         return False
 
     def load_pdf_file(self, path):
-        self.canvas.load_pdf(path)
+        try:
+            self.canvas.load_pdf(path)
+        except Exception:
+            toast = Adw.Toast.new(_("Unable to open the file"))
+            toast.set_timeout(3)
+            self.toast_overlay.add_toast(toast)
+            return
         self.stack.set_visible_child_name("content")
         filename = path.split("/")[-1]
         self.window_title.set_title(f"{filename} - Bounds")
@@ -505,20 +512,25 @@ class MainWindow(Adw.ApplicationWindow):
         self.lbl_coords.set_text("")
         self._current_coords = ""
         self._extracted_text = ""
-        GLib.idle_add(self.canvas.fit_to_width)
+        if self._fit_width_pending is not None:
+            GLib.source_remove(self._fit_width_pending)
+        self._fit_width_pending = GLib.idle_add(self.canvas.fit_to_width)
 
     def on_zoom_changed(self, scale):
         self.btn_zoom_in.set_sensitive(self.canvas.page is not None and scale < 3.0)
         self.btn_zoom_out.set_sensitive(self.canvas.page is not None and scale > 0.5)
 
     def on_zoom_in_clicked(self, btn):
-        self.canvas.zoom_about_center(1.1)
+        if self.canvas.page is not None:
+            self.canvas.zoom_about_center(1.1)
 
     def on_zoom_out_clicked(self, btn):
-        self.canvas.zoom_about_center(1.0 / 1.1)
+        if self.canvas.page is not None:
+            self.canvas.zoom_about_center(1.0 / 1.1)
 
     def on_fit_width_clicked(self, btn):
-        self.canvas.fit_to_width()
+        if self.canvas.page is not None:
+            self.canvas.fit_to_width()
 
     def on_pan_begin(self, gesture, x, y):
         self.pan_hadj = self.document_scroll.get_hadjustment()
@@ -537,18 +549,15 @@ class MainWindow(Adw.ApplicationWindow):
         self.document_scroll.set_cursor_from_name("default")
 
     def _on_zoom_in_shortcut(self, *args):
-        if self.canvas.page is not None:
-            self.canvas.zoom_about_center(1.1)
+        self.on_zoom_in_clicked(None)
         return True
 
     def _on_zoom_out_shortcut(self, *args):
-        if self.canvas.page is not None:
-            self.canvas.zoom_about_center(1.0 / 1.1)
+        self.on_zoom_out_clicked(None)
         return True
 
     def _on_fit_width_shortcut(self, *args):
-        if self.canvas.page is not None:
-            self.canvas.fit_to_width()
+        self.on_fit_width_clicked(None)
         return True
 
     @staticmethod
