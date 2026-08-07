@@ -3,7 +3,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gio, Gtk, Pango
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango
 from canvas import PDFCanvas
 
 
@@ -422,6 +422,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.lbl_coords.set_text("")
         self._current_coords = ""
         self._extracted_text = ""
+        GLib.idle_add(self.canvas.fit_to_width)
 
     def on_zoom_changed(self, scale):
         self.btn_zoom_in.set_sensitive(self.canvas.page is not None and scale < 3.0)
