@@ -5,6 +5,8 @@ sources = [
   'main.py',
   'window.py',
   'canvas.py',
+  'dialogs.py',
+  'style.css',
 ]
 
 install_data(sources, install_dir: pkgdatadir)

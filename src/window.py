@@ -1,3 +1,4 @@
+import os
 import gi
 
 
@@ -6,6 +7,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango
 from gettext import gettext as _
 from canvas import PDFCanvas
+from dialogs import show_help, show_shortcuts
 
 
 class MainWindow(Adw.ApplicationWindow):
@@ -20,42 +22,19 @@ class MainWindow(Adw.ApplicationWindow):
         self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.toast_overlay.set_child(self.main_box)
 
-        css = Gtk.CssProvider()
-        css.load_from_string(
-            """
-            .zoom-overlay {
-                background-color: transparent;
-                border-radius: 9999px;
-                padding: 4px;
-            }
-            .zoom-overlay button.circular {
-                background-color: rgba(60, 60, 60, 0.85);
-                color: white;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-            }
-            .zoom-overlay button.circular:hover {
-                background-color: rgba(80, 80, 80, 0.9);
-            }
-            .zoom-overlay button.circular:active {
-                background-color: rgba(40, 40, 40, 0.9);
-            }
-            .zoom-overlay button.circular:disabled {
-                background-color: rgba(60, 60, 60, 0.35);
-                color: alpha(white, 0.5);
-            }
-            """
-        )
-        Gtk.StyleContext.add_provider_for_display(
-            self.get_display(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
+        css_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "style.css")
+        if os.path.exists(css_path):
+            css = Gtk.CssProvider()
+            css.load_from_path(css_path)
+            Gtk.StyleContext.add_provider_for_display(
+                self.get_display(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
 
         # HeaderBar
         self.header_bar = Adw.HeaderBar()
         self.main_box.append(self.header_bar)
 
-        self.window_title = Adw.WindowTitle(
-            title=_("PDF Bounds"), subtitle=_("PDF bounding box extractor")
-        )
+        self.window_title = Adw.WindowTitle(title=_("PDF Bounds"))
         self.header_bar.set_title_widget(self.window_title)
 
         btn_open = Gtk.Button(icon_name="document-open-symbolic")
@@ -353,6 +332,24 @@ class MainWindow(Adw.ApplicationWindow):
         )
         shortcuts.add_shortcut(
             Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("<Ctrl>q"),
+                Gtk.CallbackAction.new(self._on_close_shortcut),
+            )
+        )
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("F1"),
+                Gtk.CallbackAction.new(self._on_help_shortcut),
+            )
+        )
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("<Ctrl>question"),
+                Gtk.CallbackAction.new(self._on_shortcuts_shortcut),
+            )
+        )
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
                 Gtk.ShortcutTrigger.parse_string("<Ctrl>plus"),
                 Gtk.CallbackAction.new(self._on_zoom_in_shortcut),
             )
@@ -399,35 +396,10 @@ class MainWindow(Adw.ApplicationWindow):
         self.add_action(action)
 
     def on_shortcuts_activated(self, action, param):
-        dialog = Adw.ShortcutsDialog()
-
-        general = Adw.ShortcutsSection(title=_("General"))
-        for title, trigger in (
-            (_("Open PDF"), "<primary>o"),
-            (_("Close window"), "<primary>w"),
-        ):
-            general.add(Adw.ShortcutsItem(title=title, accelerator=trigger))
-        dialog.add(general)
-
-        zoom = Adw.ShortcutsSection(title=_("Zoom"))
-        for title, trigger in (
-            (_("Zoom in"), "<primary>plus"),
-            (_("Zoom out"), "<primary>minus"),
-            (_("Fit width"), "<primary>0"),
-        ):
-            zoom.add(Adw.ShortcutsItem(title=title, accelerator=trigger))
-        pan_item = Adw.ShortcutsItem(title=_("Pan"))
-        pan_item.props.subtitle = _("Middle click + drag")
-        zoom.add(pan_item)
-        dialog.add(zoom)
-
-        dialog.present()
+        show_shortcuts(self)
 
     def on_help_activated(self, action, param):
-        launcher = Gtk.UriLauncher.new(
-            "https://github.com/catoblepa/PDFBounds"
-        )
-        launcher.launch(self, None, None, None)
+        show_help(self)
 
     def on_about_activated(self, action, param):
         dialog = Adw.AboutDialog(
@@ -462,6 +434,14 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _on_close_shortcut(self, *args):
         self.close()
+        return True
+
+    def _on_help_shortcut(self, *args):
+        self.on_help_activated(None, None)
+        return True
+
+    def _on_shortcuts_shortcut(self, *args):
+        self.on_shortcuts_activated(None, None)
         return True
 
     def on_file_dialog_finish(self, dialog, result):

@@ -1,0 +1,24 @@
+.zoom-overlay {
+    background-color: transparent;
+    border-radius: 9999px;
+    padding: 4px;
+}
+
+.zoom-overlay button.circular {
+    background-color: rgba(60, 60, 60, 0.85);
+    color: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.zoom-overlay button.circular:hover {
+    background-color: rgba(80, 80, 80, 0.9);
+}
+
+.zoom-overlay button.circular:active {
+    background-color: rgba(40, 40, 40, 0.9);
+}
+
+.zoom-overlay button.circular:disabled {
+    background-color: rgba(60, 60, 60, 0.35);
+    color: alpha(white, 0.5);
+}

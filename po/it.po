@@ -79,6 +79,12 @@ msgstr "Coordinate"
 msgid "Copy coordinates"
 msgstr "Copia le coordinate"
 
+msgid "Quit"
+msgstr "Esci"
+
+msgid "Keyboard shortcuts"
+msgstr "Scorciatoie da tastiera"
+
 msgid "_Keyboard Shortcuts"
 msgstr "_Scorciatoie da tastiera"
 
@@ -129,3 +135,51 @@ msgstr "Seleziona visivamente le coordinate del riquadro di un PDF"
 
 msgid "PDF Bounds is a lightweight developer utility to open a PDF, drag a visual box over any text region, and extract the text from that region along with its bounding box coordinates."
 msgstr "PDF Bounds è un'utilità leggera per sviluppatori: apri un PDF, trascina un riquadro visivo su qualsiasi area di testo ed estrai il testo di quell'area insieme alle coordinate del suo riquadro di delimitazione."
+
+msgid "Using the coordinates"
+msgstr "Usare le coordinate"
+
+msgid "Help"
+msgstr "Aiuto"
+
+msgid "How to use the extracted coordinates"
+msgstr "Come usare le coordinate estratte"
+
+msgid "Draw a box over the text you are interested in. Bounds copies four numbers to the clipboard:\n\n<span font_family='monospace'>(x0, top, x1, bottom)</span>\n\nThey define the bounding box of the selected area in PDF points (1 point = 1/72 inch), measured from the top-left corner of the page. <b>x0</b> is the left edge, <b>top</b> the upper edge, <b>x1</b> the right edge and <b>bottom</b> the lower edge of the box."
+msgstr "Disegna un riquadro sul testo che ti interessa. Bounds copia quattro numeri negli appunti:\n\n<span font_family='monospace'>(x0, top, x1, bottom)</span>\n\nDefiniscono il riquadro di delimitazione dell'area selezionata in punti PDF (1 punto = 1/72 di pollice), misurati dall'angolo in alto a sinistra della pagina. <b>x0</b> è il bordo sinistro, <b>top</b> il bordo superiore, <b>x1</b> il bordo destro e <b>bottom</b> il bordo inferiore del riquadro."
+
+msgid "Example: a box from (72, 144) to (360, 288) gives\n<span font_family='monospace'>(72, 144, 360, 288)</span>"
+msgstr "Esempio: un riquadro da (72, 144) a (360, 288) produce\n<span font_family='monospace'>(72, 144, 360, 288)</span>"
+
+msgid "Use in the command line"
+msgstr "Uso dalla riga di comando"
+
+msgid "pdftotext from poppler-utils can crop a region directly. It needs the top-left corner plus the width and height:"
+msgstr "pdftotext di poppler-utils può ritagliare direttamente una regione. Richiede l'angolo in alto a sinistra più larghezza e altezza:"
+
+msgid "pdftotext (command line)"
+msgstr "pdftotext (riga di comando)"
+
+msgid "When you drag a box, Bounds copies four numbers: (x0, top, x1, bottom). They are the bounding box of the selected area in PDF points (1/72 inch), measured from the top-left corner of the page. Use them with the tools below."
+msgstr "Quando trascini un riquadro, Bounds copia quattro numeri: (x0, top, x1, bottom). Sono il riquadro di delimitazione dell'area selezionata in punti PDF (1/72 di pollice), misurati dall'angolo in alto a sinistra della pagina. Usali con gli strumenti seguenti."
+
+msgid "pdftotext (command line, poppler-utils)"
+msgstr "pdftotext (riga di comando, poppler-utils)"
+
+msgid "pdfplumber (Python)"
+msgstr "pdfplumber (Python)"
+
+msgid "PyMuPDF / fitz (Python)"
+msgstr "PyMuPDF / fitz (Python)"
+
+msgid "Camelot (Python, tables)"
+msgstr "Camelot (Python, tabelle)"
+
+msgid "Tabula (Python, tables)"
+msgstr "Tabula (Python, tabelle)"
+
+msgid "Note"
+msgstr "Nota"
+
+msgid "width = x1 - x0 and height = bottom - top. Tabula expects (top, left, bottom, right) order; the other tools use (left, top, right, bottom), same as what Bounds copies."
+msgstr "width = x1 - x0 e height = bottom - top. Tabula prevede l'ordine (top, left, bottom, right); gli altri strumenti usano (left, top, right, bottom), come quello che copia Bounds."
