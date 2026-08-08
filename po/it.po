@@ -34,6 +34,9 @@ msgstr "Apri…"
 msgid "Fit width"
 msgstr "Adatta alla larghezza"
 
+msgid "Rotate clockwise"
+msgstr "Ruota in senso orario"
+
 msgid "Zoom in"
 msgstr "Ingrandisci"
 
