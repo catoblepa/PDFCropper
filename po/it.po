@@ -76,6 +76,15 @@ msgstr "Trascina un rettangolo sul PDF per copiare le coordinate del riquadro"
 msgid "Coordinates"
 msgstr "Coordinate"
 
+msgid "OCR"
+msgstr "OCR"
+
+msgid "Language:"
+msgstr "Lingua:"
+
+msgid "Auto"
+msgstr "Auto"
+
 msgid "Copy coordinates"
 msgstr "Copia le coordinate"
 

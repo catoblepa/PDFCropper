@@ -9,6 +9,37 @@ from gettext import gettext as _
 from canvas import PDFCanvas
 from dialogs import show_help, show_shortcuts
 
+_OCR_AUTO = "__auto__"
+
+_OCR_LANG_NAMES = {
+    "eng": "English",
+    "ita": "Italiano",
+    "deu": "Deutsch",
+    "fra": "Français",
+    "spa": "Español",
+    "por": "Português",
+    "nld": "Nederlands",
+    "rus": "Русский",
+    "pol": "Polski",
+    "tur": "Türkçe",
+    "jpn": "日本語",
+}
+
+# locale base code -> tesseract language code
+_LOCALE_TO_OCR = {
+    "en": "eng",
+    "it": "ita",
+    "de": "deu",
+    "fr": "fra",
+    "es": "spa",
+    "pt": "por",
+    "nl": "nld",
+    "ru": "rus",
+    "pl": "pol",
+    "tr": "tur",
+    "ja": "jpn",
+}
+
 
 class MainWindow(Adw.ApplicationWindow):
 
@@ -310,6 +341,42 @@ class MainWindow(Adw.ApplicationWindow):
 
         self.side_box.append(coord_display_card)
 
+        # OCR card
+        ocr_card = Gtk.Frame()
+        ocr_card.add_css_class("card")
+        ocr_card.set_hexpand(True)
+
+        ocr_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        ocr_box.set_margin_start(14)
+        ocr_box.set_margin_end(14)
+        ocr_box.set_margin_top(12)
+        ocr_box.set_margin_bottom(12)
+        ocr_card.set_child(ocr_box)
+
+        ocr_header = Gtk.Label(label=_("OCR"))
+        ocr_header.set_halign(Gtk.Align.START)
+        ocr_header.add_css_class("heading")
+        ocr_box.append(ocr_header)
+
+        ocr_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        ocr_lbl = Gtk.Label(label=_("Language:"))
+        ocr_lbl.set_halign(Gtk.Align.START)
+        ocr_row.append(ocr_lbl)
+
+        self.ocr_langs = self._load_ocr_languages()
+        self.ocr_model = Gtk.StringList()
+        for _code, label in self.ocr_langs:
+            self.ocr_model.append(label)
+        self.ocr_dropdown = Gtk.DropDown.new(self.ocr_model, None)
+        self.ocr_dropdown.set_selected(0)
+        self.ocr_dropdown.set_hexpand(True)
+        self.ocr_dropdown.set_sensitive(bool(self.ocr_langs))
+        self._select_ocr_language()
+        ocr_row.append(self.ocr_dropdown)
+        ocr_box.append(ocr_row)
+
+        self.side_box.append(ocr_card)
+
         # Drag & Drop Target
         drop_target = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
         drop_target.connect("drop", self.on_file_dropped)
@@ -394,6 +461,48 @@ class MainWindow(Adw.ApplicationWindow):
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
         self.add_action(action)
+
+    def _load_ocr_languages(self):
+        codes = PDFCanvas.get_ocr_languages()
+        langs = [(_OCR_AUTO, _("Auto"))]
+        for code in codes:
+            name = _OCR_LANG_NAMES.get(code, code)
+            langs.append((code, name))
+        return langs
+
+    def _select_ocr_language(self):
+        """Select the language matching the system locale, if installed."""
+        import locale
+
+        raw = locale.getlocale()[0]
+        if not raw:
+            return
+        base = raw.split("_")[0].lower()
+        tess_code = _LOCALE_TO_OCR.get(base)
+        if not tess_code:
+            return
+        for i, (lang_code, _name) in enumerate(self.ocr_langs):
+            if lang_code == tess_code:
+                self.ocr_dropdown.set_selected(i)
+                return
+
+    def _selected_ocr_code(self):
+        idx = self.ocr_dropdown.get_selected()
+        if 0 <= idx < len(self.ocr_langs):
+            return self.ocr_langs[idx][0]
+        return _OCR_AUTO
+
+    def _ocr_text(self, x0, top, x1, bottom):
+        if not PDFCanvas.tesseract_available():
+            return ""
+        lang = self._selected_ocr_code()
+        if lang == _OCR_AUTO:
+            for code in PDFCanvas.get_ocr_languages():
+                text = self.canvas.ocr_region(x0, top, x1, bottom, code)
+                if text:
+                    return text
+            return ""
+        return self.canvas.ocr_region(x0, top, x1, bottom, lang)
 
     def on_shortcuts_activated(self, action, param):
         show_shortcuts(self)
@@ -640,6 +749,27 @@ class MainWindow(Adw.ApplicationWindow):
             text = self.canvas.extract_text(x0, top, x1, bottom)
         self.canvas.set_bbox(x0, top, x1, bottom)
         self.update_preview(x0, top, x1, bottom, text)
+        if not (text or "").strip() and self.ocr_dropdown.get_sensitive():
+            self._run_ocr(x0, top, x1, bottom)
+
+    def _run_ocr(self, x0, top, x1, bottom):
+        if getattr(self, "_ocr_busy", False):
+            return
+        self._ocr_busy = True
+
+        def work():
+            ocr_text = self._ocr_text(x0, top, x1, bottom)
+            GLib.idle_add(self._ocr_done, x0, top, x1, bottom, ocr_text)
+
+        import threading
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _ocr_done(self, x0, top, x1, bottom, ocr_text):
+        self._ocr_busy = False
+        if ocr_text:
+            self._extracted_text = ocr_text
+            self.lbl_info.set_text(ocr_text)
 
     def update_preview(self, x0, top, x1, bottom, text):
         formatted_str = self.format_coordinates(x0, top, x1, bottom)

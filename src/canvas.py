@@ -1,3 +1,7 @@
+import os
+import shutil
+import subprocess
+import tempfile
 import gi
 
 
@@ -173,6 +177,66 @@ class PDFCanvas(Gtk.DrawingArea):
             rect.x1, rect.y1, rect.x2, rect.y2 = x0, top, x1, bottom
             return self.page.get_text_for_area(rect) or ""
         return self._reconstruct_text(text, rects, x0, top, x1, bottom)
+
+    @staticmethod
+    def get_ocr_languages():
+        """List installed tesseract languages from tessdata dir."""
+        tessdata_dir = os.environ.get(
+            "TESSDATA_PREFIX", "/app/share/tessdata"
+        )
+        if not os.path.isdir(tessdata_dir):
+            return []
+        langs = []
+        for name in sorted(os.listdir(tessdata_dir)):
+            if name.endswith(".traineddata"):
+                langs.append(name[: -len(".traineddata")])
+        return langs
+
+    @staticmethod
+    def tesseract_available():
+        return shutil.which("tesseract") is not None
+
+    def ocr_region(self, x0, top, x1, bottom, lang):
+        """Run tesseract OCR on the selected region."""
+        if not self.page:
+            return ""
+        w_pts = x1 - x0
+        h_pts = bottom - top
+        if w_pts <= 0 or h_pts <= 0:
+            return ""
+        scale = max(self.scale, 2.0)
+        iw = max(1, int(w_pts * scale))
+        ih = max(1, int(h_pts * scale))
+
+        surface = cairo.ImageSurface(cairo.Format.ARGB32, iw, ih)
+        context = cairo.Context(surface)
+        context.set_source_rgb(1, 1, 1)
+        context.paint()
+        context.scale(scale, scale)
+        context.translate(-x0, -top)
+        self.page.render(context)
+
+        png_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                png_path = tmp.name
+            surface.write_to_png(png_path)
+            lang_opt = "-l", lang if lang else "eng"
+            result = subprocess.run(
+                ["tesseract", png_path, "-", *lang_opt, "--psm", "6"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            return result.stdout.strip()
+        except (subprocess.SubprocessError, FileNotFoundError, OSError):
+            return ""
+        finally:
+            if png_path and os.path.exists(png_path):
+                try:
+                    os.unlink(png_path)
+                except OSError:
+                    pass
 
     def _get_layout(self):
         if self._layout_cache is None:
