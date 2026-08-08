@@ -16,6 +16,7 @@ def show_shortcuts(parent):
         (_("Close window"), "<primary>w"),
         (_("Quit"), "<primary>q"),
         (_("Help"), "F1"),
+        (_("Toggle side panel"), "F9"),
     ):
         general.add(Adw.ShortcutsItem(title=title, accelerator=trigger))
     dialog.add(general)
@@ -100,7 +101,7 @@ def show_help(parent):
 
     intro = Gtk.Label(
         label=_(
-            "Draw a box over the text you are interested in. Bounds "
+            "Draw a box over the text you are interested in. PDFCropper "
             "copies four numbers to the clipboard:\n\n"
             "<span font_family='monospace'>(x0, top, x1, bottom)</span>\n\n"
             "They define the bounding box of the selected area in PDF "
@@ -183,7 +184,7 @@ def show_help(parent):
             "width = x1 - x0 and height = bottom - top. "
             "Tabula expects (top, left, bottom, right) order; "
             "the other tools use (left, top, right, bottom), "
-            "same as what Bounds copies."
+            "same as what PDFCropper copies."
         ),
         code=False,
     ))

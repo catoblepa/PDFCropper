@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="io.github.catoblepa.PDFCropper" path="/io/github/catoblepa/PDFCropper/">
+    <key name="sidebar-open" type="b">
+      <default>false</default>
+      <summary>Whether the side panel is open</summary>
+      <description>Whether the side panel showing coordinates and OCR options is visible.</description>
+    </key>
+  </schema>
+</schemalist>

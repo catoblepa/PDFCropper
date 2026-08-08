@@ -22,3 +22,19 @@
     background-color: rgba(60, 60, 60, 0.35);
     color: alpha(white, 0.5);
 }
+
+.sidebar-toggle {
+    background: none;
+    box-shadow: none;
+}
+.sidebar-toggle:checked {
+    background-color: rgba(128, 128, 128, 0.25);
+}
+
+.side-panel {
+    background-color: color-mix(
+        in srgb,
+        var(--window-bg-color) 96%,
+        var(--window-fg-color) 4%
+    );
+}

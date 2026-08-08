@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=PDFCropper
+Comment=Crop, inspect and extract text from PDF regions
+Exec=pdfcropper %U
+Icon=io.github.catoblepa.PDFCropper
+Terminal=false
+Type=Application
+Categories=Utility;Development;
+MimeType=application/pdf;
+StartupNotify=true

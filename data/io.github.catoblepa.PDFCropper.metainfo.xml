@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.catoblepa.PDFCropper</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>PDFCropper</name>
+  <summary>Crop, inspect and extract text from PDF regions</summary>
+  <description>
+    <p>PDFCropper is a lightweight developer utility that lets you draw a box over any region of a PDF, extract the text and bounding box coordinates, run OCR, rotate the page and save the cropped result.</p>
+  </description>
+  <developer id="io.github.catoblepa">
+    <name>catoblepa</name>
+  </developer>
+  <launchable type="desktop-id">io.github.catoblepa.PDFCropper.desktop</launchable>
+  <provides>
+    <id>io.github.catoblepa.PDFCropper.desktop</id>
+  </provides>
+  <content_rating type="oars-1.1"/>
+  <categories>
+    <category>Utility</category>
+    <category>Development</category>
+  </categories>
+  <url type="homepage">https://github.com/catoblepa/PDFCropper</url>
+</component>

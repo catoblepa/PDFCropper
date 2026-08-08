@@ -44,7 +44,7 @@ _LOCALE_TO_OCR = {
 class MainWindow(Adw.ApplicationWindow):
 
     def __init__(self, app):
-        super().__init__(application=app, title=_("PDF Bounds"))
+        super().__init__(application=app, title=_("PDFCropper"))
         self.set_default_size(1000, 700)
 
         self.toast_overlay = Adw.ToastOverlay()
@@ -65,7 +65,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.header_bar = Adw.HeaderBar()
         self.main_box.append(self.header_bar)
 
-        self.window_title = Adw.WindowTitle(title=_("PDF Bounds"))
+        self.window_title = Adw.WindowTitle(title=_("PDFCropper"))
         self.header_bar.set_title_widget(self.window_title)
 
         btn_open = Gtk.Button(icon_name="document-open-symbolic")
@@ -78,6 +78,27 @@ class MainWindow(Adw.ApplicationWindow):
         self.btn_rotate.connect("clicked", self.on_rotate_clicked)
         self.btn_rotate.set_sensitive(False)
         self.header_bar.pack_start(self.btn_rotate)
+
+        self.btn_save_crop = Gtk.Button(label=_("Save cropped PDF"))
+        self.btn_save_crop.set_icon_name("crop-symbolic")
+        self.btn_save_crop.set_tooltip_text(_("Save cropped PDF"))
+        self.btn_save_crop.connect("clicked", self.on_save_crop_clicked)
+        self.btn_save_crop.set_sensitive(False)
+        self.btn_save_crop.add_css_class("suggested-action")
+        self.header_bar.pack_start(self.btn_save_crop)
+
+        # Sidebar toggle (right side, next to the panel)
+        self.btn_toggle_sidebar = Gtk.ToggleButton()
+        self.btn_toggle_sidebar.set_icon_name("sidebar-show-symbolic")
+        self.btn_toggle_sidebar.set_tooltip_text(_("Toggle side panel"))
+        self.btn_toggle_sidebar.add_css_class("flat")
+        self.btn_toggle_sidebar.add_css_class("sidebar-toggle")
+        self.btn_toggle_sidebar.connect("toggled", self.on_toggle_sidebar)
+        self.header_bar.pack_end(self.btn_toggle_sidebar)
+
+        self.settings = Gio.Settings.new("io.github.catoblepa.PDFCropper")
+        sidebar_open = self.settings.get_boolean("sidebar-open")
+        self.btn_toggle_sidebar.set_active(sidebar_open)
 
         # Sandwich menu
         self.menu_btn = Gtk.MenuButton()
@@ -174,15 +195,22 @@ class MainWindow(Adw.ApplicationWindow):
         self.canvas_overlay.add_overlay(zoom_toolbar)
         self.paned.set_start_child(self.canvas_overlay)
 
-        # Right: side panel
+        # Right: side panel (collapsible)
+        self.side_revealer = Gtk.Revealer()
+        self.side_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_LEFT)
+        self.side_revealer.set_reveal_child(self.btn_toggle_sidebar.get_active())
+        self.side_revealer.set_transition_duration(150)
+        self.paned.set_end_child(self.side_revealer)
+
         side_scroll = Gtk.ScrolledWindow()
-        side_scroll.set_min_content_width(280)
+        side_scroll.set_min_content_width(320)
         side_scroll.set_max_content_width(360)
-        self.paned.set_end_child(side_scroll)
+        side_scroll.add_css_class("side-panel")
+        self.side_revealer.set_child(side_scroll)
 
         self.side_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        self.side_box.set_margin_start(12)
-        self.side_box.set_margin_end(12)
+        self.side_box.set_margin_start(7)
+        self.side_box.set_margin_end(7)
         self.side_box.set_margin_top(12)
         self.side_box.set_margin_bottom(12)
         self.side_box.set_hexpand(False)
@@ -439,6 +467,12 @@ class MainWindow(Adw.ApplicationWindow):
                 Gtk.CallbackAction.new(self._on_fit_width_shortcut),
             )
         )
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("F9"),
+                Gtk.CallbackAction.new(self._on_toggle_sidebar_shortcut),
+            )
+        )
         self.add_controller(shortcuts)
 
         self._updating_spins = False
@@ -446,6 +480,8 @@ class MainWindow(Adw.ApplicationWindow):
         self._current_coords = ""
         self._fit_width_pending = None
         self._spin_to_key = {s: k for k, s in self.coord_spins.items()}
+
+        self.connect("map", self._on_map)
 
     def _build_menu_model(self):
         menu = Gio.Menu()
@@ -459,7 +495,7 @@ class MainWindow(Adw.ApplicationWindow):
         menu.append_section(None, main_section)
 
         about_section = Gio.Menu()
-        about_section.append(_("_About PDF Bounds"), "win.about")
+        about_section.append(_("_About PDFCropper"), "win.about")
         menu.append_section(None, about_section)
         return menu
 
@@ -518,8 +554,8 @@ class MainWindow(Adw.ApplicationWindow):
 
     def on_about_activated(self, action, param):
         dialog = Adw.AboutDialog(
-            application_name=_("PDF Bounds"),
-            application_icon="io.github.catoblepa.PDFBounds",
+            application_name=_("PDFCropper"),
+            application_icon="io.github.catoblepa.PDFCropper",
             version="0.1.0",
             developer_name=_("catoblepa"),
             license_type=Gtk.License.GPL_3_0,
@@ -585,12 +621,11 @@ class MainWindow(Adw.ApplicationWindow):
             return
         self.stack.set_visible_child_name("content")
         filename = path.split("/")[-1]
-        self.window_title.set_title(f"{filename} - {_('PDF Bounds')}")
+        self.window_title.set_title(f"{filename} - {_('PDFCropper')}")
         self.btn_fit_width.set_sensitive(True)
         self.btn_rotate.set_sensitive(True)
+        self.btn_save_crop.set_sensitive(False)
         self.on_zoom_changed(self.canvas.scale)
-        if self.get_width() > 0:
-            self.paned.set_position(self.get_width() - 320)
 
         size = self.canvas.get_page_size()
         if size:
@@ -632,6 +667,72 @@ class MainWindow(Adw.ApplicationWindow):
         if self.canvas.page is not None:
             self.canvas.rotate(90)
 
+    def on_toggle_sidebar(self, btn):
+        if hasattr(self, "settings"):
+            self.settings.set_boolean("sidebar-open", btn.get_active())
+        if not hasattr(self, "side_revealer"):
+            return
+        visible = btn.get_active()
+        self.side_revealer.set_reveal_child(visible)
+        if visible:
+            if self.get_width() > 0:
+                self.paned.set_position(self.get_width() - 320)
+        else:
+            if self.get_width() > 0:
+                self.paned.set_position(self.get_width())
+
+    def _apply_panel_position(self):
+        if self.get_width() > 0 and self.btn_toggle_sidebar.get_active():
+            self.paned.set_position(self.get_width() - 320)
+        return False
+
+    def _on_map(self, widget):
+        GLib.idle_add(self._apply_panel_position)
+
+    def on_save_crop_clicked(self, btn):
+        if self.canvas.bbox is None:
+            return
+        dialog = Gtk.FileDialog()
+        dialog.set_title(_("Save cropped PDF"))
+        dialog.set_initial_name(self._suggested_crop_name())
+        file_filter = Gtk.FileFilter()
+        file_filter.set_name(_("PDF documents"))
+        file_filter.add_mime_type("application/pdf")
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(file_filter)
+        dialog.set_filters(filters)
+        dialog.save(self, None, self.on_save_crop_finish)
+
+    def _suggested_crop_name(self):
+        path = getattr(self.canvas, "_file_path", "") or ""
+        if path.startswith("file://"):
+            path = path[len("file://"):]
+        name = os.path.basename(path)
+        if not name or "." not in name:
+            return "cropped.pdf"
+        stem, ext = name.rsplit(".", 1)
+        return f"{stem}.cropped.{ext}"
+
+    def on_save_crop_finish(self, dialog, result):
+        try:
+            file = dialog.save_finish(result)
+            if not file:
+                return
+            path = file.get_path()
+            if not path:
+                return
+            x0, top, x1, bottom = self.canvas.bbox
+            if self.canvas.save_cropped_pdf(path, x0, top, x1, bottom):
+                toast = Adw.Toast.new(_("Cropped PDF saved"))
+                toast.set_timeout(2)
+                self.toast_overlay.add_toast(toast)
+            else:
+                toast = Adw.Toast.new(_("Unable to save cropped PDF"))
+                toast.set_timeout(3)
+                self.toast_overlay.add_toast(toast)
+        except Exception:
+            pass
+
     def on_pan_begin(self, gesture, x, y):
         self.pan_hadj = self.document_scroll.get_hadjustment()
         self.pan_vadj = self.document_scroll.get_vadjustment()
@@ -658,6 +759,12 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _on_fit_width_shortcut(self, *args):
         self.on_fit_width_clicked(None)
+        return True
+
+    def _on_toggle_sidebar_shortcut(self, *args):
+        self.btn_toggle_sidebar.set_active(
+            not self.btn_toggle_sidebar.get_active()
+        )
         return True
 
     @staticmethod
@@ -760,6 +867,7 @@ class MainWindow(Adw.ApplicationWindow):
             text = self.canvas.extract_text(x0, top, x1, bottom)
         self.canvas.set_bbox(x0, top, x1, bottom)
         self.update_preview(x0, top, x1, bottom, text)
+        self.btn_save_crop.set_sensitive(True)
         if not (text or "").strip() and self.ocr_dropdown.get_sensitive():
             self._run_ocr(x0, top, x1, bottom)
 

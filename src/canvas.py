@@ -18,6 +18,7 @@ class PDFCanvas(Gtk.DrawingArea):
         super().__init__()
         self.doc = None
         self.page = None
+        self._file_path = None
         self.scale = 1.0
         self.rotation = 0
         self._layout_cache = None
@@ -60,6 +61,7 @@ class PDFCanvas(Gtk.DrawingArea):
             if not file_path.startswith("file://")
             else file_path
         )
+        self._file_path = uri
         self.doc = Poppler.Document.new_from_file(uri, None)
         self.bbox = None
         self.scale = 1.0
@@ -303,6 +305,60 @@ class PDFCanvas(Gtk.DrawingArea):
                     os.unlink(png_path)
                 except OSError:
                     pass
+
+    def save_cropped_pdf(self, output_path, x0, top, x1, bottom):
+        """Save a cropped copy of the page using pypdf (vector crop).
+
+        The output is rotated exactly as shown on screen.
+        """
+        if not self.doc or self.bbox is None or not self._file_path:
+            return False
+        try:
+            from pypdf import PdfReader, PdfWriter
+        except ImportError:
+            return False
+
+        if not self.page:
+            return False
+
+        src_path = self._file_path
+        if src_path.startswith("file://"):
+            src_path = src_path[len("file://"):]
+
+        reader = PdfReader(src_path)
+        page = reader.pages[0]
+
+        # rotate the page content as shown on screen
+        if self.rotation:
+            page.rotate(self.rotation)
+            page.transfer_rotation_to_content()
+
+        pw, ph = self.page.get_size()
+        # rotated mediabox dimensions (bottom-left origin in PDF user space)
+        mw, mh = pw, ph
+        if self.rotation in (90, 270):
+            mw, mh = ph, pw
+
+        # bbox corners in view coordinates (as seen on screen), in points
+        wx0, wy0 = self.page_to_widget(x0, top)
+        wx1, wy1 = self.page_to_widget(x1, bottom)
+        s = self.scale
+        v_left, v_right = sorted([wx0 / s, wx1 / s])
+        v_top, v_bottom = sorted([wy0 / s, wy1 / s])
+
+        # cropbox in PDF user space (bottom-left origin) of the rotated box
+        left = v_left
+        lower = mh - v_bottom
+        right = v_right
+        upper = mh - v_top
+
+        page.cropbox.lower_left = (left, lower)
+        page.cropbox.upper_right = (right, upper)
+        writer = PdfWriter()
+        writer.add_page(page)
+        with open(output_path, "wb") as f:
+            writer.write(f)
+        return True
 
     def _get_layout(self):
         if self._layout_cache is None:

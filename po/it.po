@@ -1,11 +1,11 @@
-# Italian translation for PDF Bounds.
+# Italian translation for PDFCropper.
 # Copyright (C) 2026 catoblepa
-# This file is distributed under the same license as the PDF Bounds package.
+# This file is distributed under the same license as the PDFCropper package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pdf-bounds 0.1.0\n"
-"Report-Msgid-Bugs-To: https://github.com/catoblepa/PDFBounds\n"
+"Project-Id-Version: pdfcropper 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/catoblepa/PDFCropper\n"
 "POT-Creation-Date: 2026-08-08 00:00+0000\n"
 "PO-Revision-Date: 2026-08-08 00:00+0000\n"
 "Last-Translator: Davide Truffa <davide.truffa@gmail.com>\n"
@@ -36,6 +36,18 @@ msgstr "Adatta alla larghezza"
 
 msgid "Rotate clockwise"
 msgstr "Ruota in senso orario"
+
+msgid "Save cropped PDF"
+msgstr "Salva il PDF ritagliato"
+
+msgid "PDF documents"
+msgstr "Documenti PDF"
+
+msgid "Cropped PDF saved"
+msgstr "PDF ritagliato salvato"
+
+msgid "Unable to save cropped PDF"
+msgstr "Impossibile salvare il PDF ritagliato"
 
 msgid "Zoom in"
 msgstr "Ingrandisci"
@@ -94,6 +106,9 @@ msgstr "Copia le coordinate"
 msgid "Quit"
 msgstr "Esci"
 
+msgid "Toggle side panel"
+msgstr "Mostra/nascondi pannello laterale"
+
 msgid "Keyboard shortcuts"
 msgstr "Scorciatoie da tastiera"
 
@@ -103,8 +118,8 @@ msgstr "_Scorciatoie da tastiera"
 msgid "_Help"
 msgstr "_Aiuto"
 
-msgid "_About PDF Bounds"
-msgstr "_Informazioni su PDF Bounds"
+msgid "_About PDFCropper"
+msgstr "_Informazioni su PDFCropper"
 
 msgid "General"
 msgstr "Generale"
@@ -121,8 +136,8 @@ msgstr "Trascina"
 msgid "Middle click + drag"
 msgstr "Clic centrale + trascina"
 
-msgid "PDF Bounds"
-msgstr "PDF Bounds"
+msgid "PDFCropper"
+msgstr "PDFCropper"
 
 msgid "PDF bounding box extractor"
 msgstr "Estrattore di riquadri di delimitazione di PDF"
@@ -145,8 +160,8 @@ msgstr "Impossibile aprire il file"
 msgid "Pick PDF bounding box coordinates visually"
 msgstr "Seleziona visivamente le coordinate del riquadro di un PDF"
 
-msgid "PDF Bounds is a lightweight developer utility to open a PDF, drag a visual box over any text region, and extract the text from that region along with its bounding box coordinates."
-msgstr "PDF Bounds è un'utilità leggera per sviluppatori: apri un PDF, trascina un riquadro visivo su qualsiasi area di testo ed estrai il testo di quell'area insieme alle coordinate del suo riquadro di delimitazione."
+msgid "PDFCropper is a lightweight developer utility that lets you draw a box over any region of a PDF, extract the text and bounding box coordinates, run OCR, rotate the page and save the cropped result."
+msgstr "PDFCropper è un'utilità leggera per sviluppatori che consente di disegnare un riquadro su qualsiasi area di un PDF, estrarre il testo e le coordinate del riquadro di delimitazione, eseguire l'OCR, ruotare la pagina e salvare il risultato ritagliato."
 
 msgid "Using the coordinates"
 msgstr "Usare le coordinate"
@@ -157,8 +172,8 @@ msgstr "Aiuto"
 msgid "How to use the extracted coordinates"
 msgstr "Come usare le coordinate estratte"
 
-msgid "Draw a box over the text you are interested in. Bounds copies four numbers to the clipboard:\n\n<span font_family='monospace'>(x0, top, x1, bottom)</span>\n\nThey define the bounding box of the selected area in PDF points (1 point = 1/72 inch), measured from the top-left corner of the page. <b>x0</b> is the left edge, <b>top</b> the upper edge, <b>x1</b> the right edge and <b>bottom</b> the lower edge of the box."
-msgstr "Disegna un riquadro sul testo che ti interessa. Bounds copia quattro numeri negli appunti:\n\n<span font_family='monospace'>(x0, top, x1, bottom)</span>\n\nDefiniscono il riquadro di delimitazione dell'area selezionata in punti PDF (1 punto = 1/72 di pollice), misurati dall'angolo in alto a sinistra della pagina. <b>x0</b> è il bordo sinistro, <b>top</b> il bordo superiore, <b>x1</b> il bordo destro e <b>bottom</b> il bordo inferiore del riquadro."
+msgid "Draw a box over the text you are interested in. PDFCropper copies four numbers to the clipboard:\n\n<span font_family='monospace'>(x0, top, x1, bottom)</span>\n\nThey define the bounding box of the selected area in PDF points (1 point = 1/72 inch), measured from the top-left corner of the page. <b>x0</b> is the left edge, <b>top</b> the upper edge, <b>x1</b> the right edge and <b>bottom</b> the lower edge of the box."
+msgstr "Disegna un riquadro sul testo che ti interessa. PDFCropper copia quattro numeri negli appunti:\n\n<span font_family='monospace'>(x0, top, x1, bottom)</span>\n\nDefiniscono il riquadro di delimitazione dell'area selezionata in punti PDF (1 punto = 1/72 di pollice), misurati dall'angolo in alto a sinistra della pagina. <b>x0</b> è il bordo sinistro, <b>top</b> il bordo superiore, <b>x1</b> il bordo destro e <b>bottom</b> il bordo inferiore del riquadro."
 
 msgid "Example: a box from (72, 144) to (360, 288) gives\n<span font_family='monospace'>(72, 144, 360, 288)</span>"
 msgstr "Esempio: un riquadro da (72, 144) a (360, 288) produce\n<span font_family='monospace'>(72, 144, 360, 288)</span>"
@@ -171,9 +186,6 @@ msgstr "pdftotext di poppler-utils può ritagliare direttamente una regione. Ric
 
 msgid "pdftotext (command line)"
 msgstr "pdftotext (riga di comando)"
-
-msgid "When you drag a box, Bounds copies four numbers: (x0, top, x1, bottom). They are the bounding box of the selected area in PDF points (1/72 inch), measured from the top-left corner of the page. Use them with the tools below."
-msgstr "Quando trascini un riquadro, Bounds copia quattro numeri: (x0, top, x1, bottom). Sono il riquadro di delimitazione dell'area selezionata in punti PDF (1/72 di pollice), misurati dall'angolo in alto a sinistra della pagina. Usali con gli strumenti seguenti."
 
 msgid "pdftotext (command line, poppler-utils)"
 msgstr "pdftotext (riga di comando, poppler-utils)"
@@ -193,5 +205,5 @@ msgstr "Tabula (Python, tabelle)"
 msgid "Note"
 msgstr "Nota"
 
-msgid "width = x1 - x0 and height = bottom - top. Tabula expects (top, left, bottom, right) order; the other tools use (left, top, right, bottom), same as what Bounds copies."
-msgstr "width = x1 - x0 e height = bottom - top. Tabula prevede l'ordine (top, left, bottom, right); gli altri strumenti usano (left, top, right, bottom), come quello che copia Bounds."
+msgid "width = x1 - x0 and height = bottom - top. Tabula expects (top, left, bottom, right) order; the other tools use (left, top, right, bottom), same as what PDFCropper copies."
+msgstr "width = x1 - x0 e height = bottom - top. Tabula prevede l'ordine (top, left, bottom, right); gli altri strumenti usano (left, top, right, bottom), come quello che copia PDFCropper."

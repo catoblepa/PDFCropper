@@ -1,16 +1,21 @@
-# PDF Bounds
+# PDFCropper
 
-A lightweight developer utility to open a PDF, drag a visual box over any text region, and extract the text from that region along with its bounding box coordinates.
+A lightweight developer utility to select, inspect, extract and crop regions of a PDF. Draw a box over any area, read the text and its bounding box coordinates, run OCR on scanned content, rotate the page, and save a cropped copy of the document.
 
-Built with GTK 4, libadwaita and poppler-glib.
+Built with GTK 4, libadwaita, poppler-glib and tesseract.
 
 ## Features
 
 - Open a PDF by dialog, drag & drop, or command line
-- Drag a box over any text region to get its bounding box coordinates in PDF points
+- Draw a box over any region to get its bounding box coordinates in PDF points
 - Extract the text contained in the selected region
+- Run OCR (tesseract) on scanned or image-only content, with multiple languages
 - Resize, move, or lock individual coordinates from the side panel
 - Zoom in/out, fit to width, and middle-click pan
+- Rotate the page clockwise for easier reading and OCR
+- Save a vector cropped copy of the selected region, rotated exactly as shown
+- Side panel can be hidden (F9), the last state is remembered
+- English and Italian interface
 
 ## Build
 
@@ -20,24 +25,19 @@ Built with GTK 4, libadwaita and poppler-glib.
 - GTK 4 (>= 4.14)
 - libadwaita (>= 1.5)
 - poppler-glib (>= 0.18)
+- tesseract (>= 5) with language data
+- pypdf
 - Meson (>= 0.59) and Ninja
-
-### Meson
-
-```sh
-meson setup build && meson compile -C build
-meson install -C build
-```
 
 ### Flatpak
 
 ```sh
-flatpak-builder --user --install build-dir io.github.catoblepa.PDFBounds.json
+flatpak-builder --user --install build-dir io.github.catoblepa.PDFCropper.json
 ```
 
 ## Usage
 
-When you drag a box, PDF Bounds copies four numbers: `(x0, top, x1, bottom)`. They are the bounding box of the selected area in PDF points (1/72 inch), measured from the top-left corner of the page. Use them with the tools below.
+When you draw a box, PDFCropper copies four numbers: `(x0, top, x1, bottom)`. They are the bounding box of the selected area in PDF points (1/72 inch), measured from the top-left corner of the page. Use them with the tools below.
 
 ### pdftotext (command line, poppler-utils)
 

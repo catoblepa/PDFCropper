@@ -1,4 +1,4 @@
-pkgdatadir = get_option('prefix') / get_option('datadir') / 'bounds'
+pkgdatadir = get_option('prefix') / get_option('datadir') / 'pdfcropper'
 
 sources = [
   '__init__.py',
@@ -16,8 +16,8 @@ conf.set('PYTHON', find_program('python3').full_path())
 conf.set('pkgdatadir', pkgdatadir)
 
 configure_file(
-  input: 'bounds.in',
-  output: 'bounds',
+  input: 'pdfcropper.in',
+  output: 'pdfcropper',
   configuration: conf,
   install: true,
   install_dir: get_option('bindir'),

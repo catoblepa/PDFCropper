@@ -1,11 +1,11 @@
 {
-  "app-id": "io.github.catoblepa.PDFBounds",
+  "app-id": "io.github.catoblepa.PDFCropper",
   "runtime": "org.gnome.Platform",
   "runtime-version": "50",
   "sdk": "org.gnome.Sdk",
-  "command": "bounds",
+  "command": "pdfcropper",
   "add-extensions": {
-    "io.github.catoblepa.PDFBounds.tessdata": {
+    "io.github.catoblepa.PDFCropper.tessdata": {
       "directory": "share/tessdata",
       "version": "4.1.0",
       "bundle": true
@@ -127,7 +127,23 @@
       ]
     },
     {
-      "name": "bounds",
+      "name": "pypdf",
+      "buildsystem": "simple",
+      "build-commands": [
+        "tar xzf pypdf-6.13.3.tar.gz",
+        "mkdir -p /app/lib/python3.13/site-packages",
+        "cp -av pypdf-6.13.3/pypdf /app/lib/python3.13/site-packages/"
+      ],
+      "sources": [
+        {
+          "type": "file",
+          "url": "https://files.pythonhosted.org/packages/source/p/pypdf/pypdf-6.13.3.tar.gz",
+          "sha256": "f3cb822769725f1bac658c406cfc9460399043f3750c2d3e4650e0a85eacabd7"
+        }
+      ]
+    },
+    {
+      "name": "pdfcropper",
       "buildsystem": "meson",
       "sources": [
         {
