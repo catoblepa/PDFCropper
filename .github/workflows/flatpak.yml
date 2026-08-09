@@ -32,7 +32,7 @@ jobs:
           arch: ${{ matrix.arch }}
 
       - name: Upload bundle as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: io.github.catoblepa.PDFCropper.${{ matrix.arch }}
           path: io.github.catoblepa.PDFCropper.flatpak
@@ -40,6 +40,6 @@ jobs:
 
       - name: Publish to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: io.github.catoblepa.PDFCropper.flatpak
