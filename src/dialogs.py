@@ -34,6 +34,8 @@ def show_shortcuts(parent):
         (_("Zoom in"), "<primary>plus"),
         (_("Zoom out"), "<primary>minus"),
         (_("Fit width"), "<primary>0"),
+        (_("Rotate clockwise"), "<primary>Right"),
+        (_("Rotate counterclockwise"), "<primary>Left"),
         (_("Keyboard shortcuts"), "<primary>question"),
     ):
         zoom.add(Adw.ShortcutsItem(title=title, accelerator=trigger))
@@ -185,6 +187,25 @@ def show_help(parent):
         "    pages='1',\n"
         ")[0]\n"
         "print(df)",
+    ))
+    box.append(_help_section(
+        _("OCR"),
+        _(
+            "When the region contains no selectable text (for example a "
+            "scanned page), PDFCropper runs tesseract automatically. Pick the "
+            "language in the side panel; a badge appears when the result "
+            "comes from OCR."
+        ),
+        code=False,
+    ))
+    box.append(_help_section(
+        _("Crop"),
+        _(
+            "Draw a box, then use Save cropped PDF. On a multi-page document "
+            "you can choose to crop only the current page or all pages; the "
+            "current rotation is applied to the result."
+        ),
+        code=False,
     ))
     box.append(_help_section(
         _("Note"),

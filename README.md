@@ -7,13 +7,14 @@ Built with GTK 4, libadwaita, poppler-glib and tesseract.
 ## Features
 
 - Open a PDF by dialog, drag & drop, or command line
+- Navigate multi-page documents (Page Up / Page Down)
 - Draw a box over any region to get its bounding box coordinates in PDF points
 - Extract the text contained in the selected region
 - Run OCR (tesseract) on scanned or image-only content, with multiple languages
 - Resize, move, or lock individual coordinates from the side panel
 - Zoom in/out, fit to width, and middle-click pan
-- Rotate the page clockwise for easier reading and OCR
-- Save a vector cropped copy of the selected region, rotated exactly as shown
+- Rotate the page clockwise or counterclockwise, kept across pages
+- Save a vector cropped copy of the current page or of all pages, rotated exactly as shown
 - Side panel can be hidden (F9), the last state is remembered
 - English and Italian interface
 

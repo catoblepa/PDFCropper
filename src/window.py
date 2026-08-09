@@ -518,6 +518,18 @@ class MainWindow(Adw.ApplicationWindow):
                 Gtk.CallbackAction.new(self._on_prev_page_shortcut),
             )
         )
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("<Ctrl>Right"),
+                Gtk.CallbackAction.new(self._on_rotate_shortcut),
+            )
+        )
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("<Ctrl>Left"),
+                Gtk.CallbackAction.new(self._on_rotate_left_shortcut),
+            )
+        )
         self.add_controller(shortcuts)
 
         self._updating_spins = False
@@ -611,7 +623,7 @@ class MainWindow(Adw.ApplicationWindow):
             version="0.1.0",
             developer_name=_("catoblepa"),
             license_type=Gtk.License.GPL_3_0,
-            comments=_("PDF bounding box extractor"),
+            comments=_("Crop, inspect and extract text from PDF regions"),
         )
         dialog.present(self)
 
@@ -883,6 +895,16 @@ class MainWindow(Adw.ApplicationWindow):
     def _on_next_page_shortcut(self, *args):
         if self.canvas.page is not None:
             self.on_next_page_clicked(None)
+        return True
+
+    def _on_rotate_shortcut(self, *args):
+        if self.canvas.page is not None:
+            self.on_rotate_clicked(None)
+        return True
+
+    def _on_rotate_left_shortcut(self, *args):
+        if self.canvas.page is not None:
+            self.on_rotate_left_clicked(None)
         return True
 
     @staticmethod

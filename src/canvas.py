@@ -320,9 +320,6 @@ class PDFCanvas(Gtk.DrawingArea):
         rh = abs(wy1 - wy0)
         if rw < 1 or rh < 1:
             return ""
-        k = scale / self.scale
-        rx, ry = rx * k, ry * k
-        rw, rh = rw * k, rh * k
 
         crop = cairo.ImageSurface(cairo.Format.ARGB32, int(rw), int(rh))
         crop_ctx = cairo.Context(crop)
@@ -504,8 +501,10 @@ class PDFCanvas(Gtk.DrawingArea):
             x0, top, x1, bottom = bbox
             wx0, wy0 = self.page_to_widget(x0, top)
             wx1, wy1 = self.page_to_widget(x1, bottom)
+            rx0, ry0 = min(wx0, wx1), min(wy0, wy1)
+            rx1, ry1 = max(wx0, wx1), max(wy0, wy1)
             cr.set_source_rgba(0.9, 0.2, 0.2, 0.25)
-            cr.rectangle(wx0, wy0, wx1 - wx0, wy1 - wy0)
+            cr.rectangle(rx0, ry0, rx1 - rx0, ry1 - ry0)
             cr.fill_preserve()
             cr.set_source_rgb(0.9, 0.1, 0.1)
             cr.set_line_width(1.5)

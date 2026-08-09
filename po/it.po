@@ -109,6 +109,15 @@ msgstr "Coordinate"
 msgid "OCR"
 msgstr "OCR"
 
+msgid "Crop"
+msgstr "Ritaglio"
+
+msgid "When the region contains no selectable text (for example a scanned page), PDFCropper runs tesseract automatically. Pick the language in the side panel; a badge appears when the result comes from OCR."
+msgstr "Quando l'area non contiene testo selezionabile (ad esempio una pagina scansionata), PDFCropper esegue automaticamente tesseract. Scegli la lingua nel pannello laterale; un badge appare quando il risultato proviene dall'OCR."
+
+msgid "Draw a box, then use Save cropped PDF. On a multi-page document you can choose to crop only the current page or all pages; the current rotation is applied to the result."
+msgstr "Disegna un riquadro, poi usa Salva il PDF ritagliato. Su un documento multipagina puoi scegliere di ritagliare solo la pagina corrente o tutte le pagine; la rotazione corrente viene applicata al risultato."
+
 msgid "Language:"
 msgstr "Lingua:"
 
@@ -163,9 +172,6 @@ msgstr "Clic centrale + trascina"
 msgid "PDFCropper"
 msgstr "PDFCropper"
 
-msgid "PDF bounding box extractor"
-msgstr "Estrattore di riquadri di delimitazione di PDF"
-
 msgid "catoblepa"
 msgstr "catoblepa"
 
@@ -177,6 +183,9 @@ msgstr "Testo copiato negli appunti"
 
 msgid "Coordinates copied to clipboard"
 msgstr "Coordinate copiate negli appunti"
+
+msgid "Crop, inspect and extract text from PDF regions"
+msgstr "Ritaglia, ispeziona ed estrai testo da aree di un PDF"
 
 msgid "Unable to open the file"
 msgstr "Impossibile aprire il file"
@@ -210,9 +219,6 @@ msgstr "pdftotext di poppler-utils può ritagliare direttamente una regione. Ric
 
 msgid "pdftotext (command line)"
 msgstr "pdftotext (riga di comando)"
-
-msgid "pdftotext (command line, poppler-utils)"
-msgstr "pdftotext (riga di comando, poppler-utils)"
 
 msgid "pdfplumber (Python)"
 msgstr "pdfplumber (Python)"
