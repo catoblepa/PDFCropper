@@ -4,13 +4,6 @@
   "runtime-version": "50",
   "sdk": "org.gnome.Sdk",
   "command": "pdfcropper",
-  "add-extensions": {
-    "io.github.catoblepa.PDFCropper.tessdata": {
-      "directory": "share/tessdata",
-      "version": "4.1.0",
-      "bundle": true
-    }
-  },
   "finish-args": [
     "--share=ipc",
     "--socket=fallback-x11",

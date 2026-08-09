@@ -4,9 +4,11 @@
 /_build/
 /meson-private/
 /meson-logs/
+/local-repo/
 
 # Flatpak
 /.flatpak-builder/
+*.flatpak
 
 # Python
 __pycache__/
