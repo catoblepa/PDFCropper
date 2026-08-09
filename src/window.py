@@ -73,6 +73,12 @@ class MainWindow(Adw.ApplicationWindow):
         btn_open.connect("clicked", self.on_open_clicked)
         self.header_bar.pack_start(btn_open)
 
+        self.btn_rotate_left = Gtk.Button(icon_name="object-rotate-left-symbolic")
+        self.btn_rotate_left.set_tooltip_text(_("Rotate counterclockwise"))
+        self.btn_rotate_left.connect("clicked", self.on_rotate_left_clicked)
+        self.btn_rotate_left.set_sensitive(False)
+        self.header_bar.pack_start(self.btn_rotate_left)
+
         self.btn_rotate = Gtk.Button(icon_name="object-rotate-right-symbolic")
         self.btn_rotate.set_tooltip_text(_("Rotate clockwise"))
         self.btn_rotate.connect("clicked", self.on_rotate_clicked)
@@ -624,6 +630,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.window_title.set_title(f"{filename} - {_('PDFCropper')}")
         self.btn_fit_width.set_sensitive(True)
         self.btn_rotate.set_sensitive(True)
+        self.btn_rotate_left.set_sensitive(True)
         self.btn_save_crop.set_sensitive(False)
         self.on_zoom_changed(self.canvas.scale)
 
@@ -666,6 +673,10 @@ class MainWindow(Adw.ApplicationWindow):
     def on_rotate_clicked(self, btn):
         if self.canvas.page is not None:
             self.canvas.rotate(90)
+
+    def on_rotate_left_clicked(self, btn):
+        if self.canvas.page is not None:
+            self.canvas.rotate(-90)
 
     def on_toggle_sidebar(self, btn):
         if hasattr(self, "settings"):

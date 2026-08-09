@@ -37,6 +37,9 @@ msgstr "Adatta alla larghezza"
 msgid "Rotate clockwise"
 msgstr "Ruota in senso orario"
 
+msgid "Rotate counterclockwise"
+msgstr "Ruota in senso antiorario"
+
 msgid "Save cropped PDF"
 msgstr "Salva il PDF ritagliato"
 

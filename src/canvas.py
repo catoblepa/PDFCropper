@@ -101,8 +101,9 @@ class PDFCanvas(Gtk.DrawingArea):
         available = hadj.get_page_size() if hadj else parent.get_width()
         if available <= 0:
             return
-        page_width, _ = self.page.get_size()
-        self.set_scale(available / page_width, clamp=False)
+        pw, ph = self.page.get_size()
+        view_w = ph if self.rotation in (90, 270) else pw
+        self.set_scale(available / view_w, clamp=False)
         if hadj:
             hadj.set_value(0)
 
