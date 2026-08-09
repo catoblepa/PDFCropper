@@ -8,13 +8,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [x86_64]
+    permissions:
+      contents: write
 
     container:
-      image: bilelmoussaoui/flatpak-github-actions:gnome-47
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
       options: --privileged
 
     steps:
@@ -27,8 +25,7 @@ jobs:
           manifest-path: io.github.catoblepa.PDFCropper.json
           bundle: io.github.catoblepa.PDFCropper.flatpak
           cache: true
-          cache-key: flatpak-builder-${{ matrix.arch }}-${{ github.sha }}
-          arch: ${{ matrix.arch }}
+          cache-key: flatpak-builder-${{ github.sha }}
           upload-artifact: false
 
       - name: Upload bundle as artifact
