@@ -11,6 +11,9 @@
   <developer id="io.github.catoblepa">
     <name>catoblepa</name>
   </developer>
+  <releases>
+    <release version="0.1.0" date="2026-08-09"/>
+  </releases>
   <launchable type="desktop-id">io.github.catoblepa.PDFCropper.desktop</launchable>
   <provides>
     <id>io.github.catoblepa.PDFCropper.desktop</id>
