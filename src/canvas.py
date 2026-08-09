@@ -65,6 +65,7 @@ class PDFCanvas(Gtk.DrawingArea):
         self.doc = Poppler.Document.new_from_file(uri, None)
         self.bbox = None
         self.scale = 1.0
+        self.rotation = 0
         self._layout_cache = None
         self._render_cache = None
         self.update_page()
@@ -474,35 +475,28 @@ class PDFCanvas(Gtk.DrawingArea):
                 cr.fill()
 
     def _handle_at(self, x, y, tol=8):
+        """Return the page-space handle name (nw/ne/sw/se/n/s/w/e) hit by (x, y).
+
+        The bbox is stored in page coordinates; handles are named in page
+        coordinates too, so the drag direction matches the page orientation.
+        """
         if self.bbox is None:
             return None
         x0, top, x1, bottom = self.bbox
-        px0, pt, px1, pb = (
-            x0 * self.scale,
-            top * self.scale,
-            x1 * self.scale,
-            bottom * self.scale,
-        )
-        near_left = abs(x - px0) <= tol
-        near_right = abs(x - px1) <= tol
-        near_top = abs(y - pt) <= tol
-        near_bottom = abs(y - pb) <= tol
-        if near_top and near_left:
-            return "nw"
-        if near_top and near_right:
-            return "ne"
-        if near_bottom and near_left:
-            return "sw"
-        if near_bottom and near_right:
-            return "se"
-        if near_top:
-            return "n"
-        if near_bottom:
-            return "s"
-        if near_left:
-            return "w"
-        if near_right:
-            return "e"
+        handles = {
+            "nw": (x0, top),
+            "ne": (x1, top),
+            "sw": (x0, bottom),
+            "se": (x1, bottom),
+            "n": ((x0 + x1) / 2, top),
+            "s": ((x0 + x1) / 2, bottom),
+            "w": (x0, (top + bottom) / 2),
+            "e": (x1, (top + bottom) / 2),
+        }
+        for name, (hx, hy) in handles.items():
+            wx, wy = self.page_to_widget(hx, hy)
+            if abs(x - wx) <= tol and abs(y - wy) <= tol:
+                return name
         return None
 
     def _resize_to(self, x, y, min_size=5.0):
@@ -557,9 +551,11 @@ class PDFCanvas(Gtk.DrawingArea):
 
     def _point_in_bbox(self, x, y):
         x0, top, x1, bottom = self.bbox
+        wx0, wy0 = self.page_to_widget(x0, top)
+        wx1, wy1 = self.page_to_widget(x1, bottom)
         return (
-            x0 * self.scale <= x <= x1 * self.scale
-            and top * self.scale <= y <= bottom * self.scale
+            min(wx0, wx1) <= x <= max(wx0, wx1)
+            and min(wy0, wy1) <= y <= max(wy0, wy1)
         )
 
     def _move_bbox_to(self, x, y):

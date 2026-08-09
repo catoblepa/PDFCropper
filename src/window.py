@@ -310,6 +310,12 @@ class MainWindow(Adw.ApplicationWindow):
         text_header.add_css_class("heading")
         text_header_row.append(text_header)
 
+        self.lbl_text_source = Gtk.Label(label="")
+        self.lbl_text_source.set_visible(False)
+        self.lbl_text_source.set_valign(Gtk.Align.CENTER)
+        self.lbl_text_source.add_css_class("badge")
+        text_header_row.append(self.lbl_text_source)
+
         btn_copy_text = Gtk.Button(icon_name="edit-copy-symbolic")
         btn_copy_text.set_tooltip_text(_("Copy extracted text"))
         btn_copy_text.add_css_class("flat")
@@ -873,11 +879,22 @@ class MainWindow(Adw.ApplicationWindow):
     def format_coordinates(self, x0, top, x1, bottom):
         return f"({x0:.0f}, {top:.0f}, {x1:.0f}, {bottom:.0f})"
 
-    def _apply_bbox(self, x0, top, x1, bottom, text=None):
+    def _set_text_source(self, source):
+        """Show a badge only when the text came from OCR (tesseract)."""
+        if source == "ocr":
+            self.lbl_text_source.set_text(_("OCR"))
+            self.lbl_text_source.set_visible(True)
+            self.lbl_text_source.add_css_class("ocr-badge")
+        else:
+            self.lbl_text_source.set_visible(False)
+            self.lbl_text_source.remove_css_class("ocr-badge")
+
+    def _apply_bbox(self, x0, top, x1, bottom, text=None, source=None):
         if text is None:
             text = self.canvas.extract_text(x0, top, x1, bottom)
+            source = "native" if (text or "").strip() else None
         self.canvas.set_bbox(x0, top, x1, bottom)
-        self.update_preview(x0, top, x1, bottom, text)
+        self.update_preview(x0, top, x1, bottom, text, source)
         self.btn_save_crop.set_sensitive(True)
         if not (text or "").strip() and self.ocr_dropdown.get_sensitive():
             self._run_ocr(x0, top, x1, bottom)
@@ -900,8 +917,9 @@ class MainWindow(Adw.ApplicationWindow):
         if ocr_text:
             self._extracted_text = ocr_text
             self.lbl_info.set_text(ocr_text)
+            self._set_text_source("ocr")
 
-    def update_preview(self, x0, top, x1, bottom, text):
+    def update_preview(self, x0, top, x1, bottom, text, source=None):
         formatted_str = self.format_coordinates(x0, top, x1, bottom)
         self._current_coords = formatted_str
         self.lbl_coords.set_text(formatted_str)
@@ -912,6 +930,7 @@ class MainWindow(Adw.ApplicationWindow):
         else:
             preview = _("(no text)")
         self.lbl_info.set_text(preview)
+        self._set_text_source(source)
 
     def on_copy_text_clicked(self, btn):
         if self._extracted_text.strip():
@@ -931,4 +950,5 @@ class MainWindow(Adw.ApplicationWindow):
 
     def on_bbox_extracted(self, x0, top, x1, bottom, text):
         self._set_spins(x0, top, x1, bottom)
-        self._apply_bbox(x0, top, x1, bottom, text)
+        source = "native" if (text or "").strip() else None
+        self._apply_bbox(x0, top, x1, bottom, text, source)

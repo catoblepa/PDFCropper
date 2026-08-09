@@ -38,3 +38,11 @@
         var(--window-fg-color) 4%
     );
 }
+
+.ocr-badge {
+    background-color: var(--accent-bg-color);
+    color: var(--accent-fg-color);
+    border-radius: 9999px;
+    padding: 2px 10px;
+    font-weight: bold;
+}
