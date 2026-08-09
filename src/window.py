@@ -822,8 +822,6 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _suggested_crop_name(self):
         path = getattr(self.canvas, "_file_path", "") or ""
-        if path.startswith("file://"):
-            path = path[len("file://"):]
         name = os.path.basename(path)
         if not name or "." not in name:
             return "cropped.pdf"

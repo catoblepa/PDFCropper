@@ -58,12 +58,10 @@ class PDFCanvas(Gtk.DrawingArea):
         self.add_controller(scroll_controller)
 
     def load_pdf(self, file_path):
-        uri = (
-            f"file://{file_path}"
-            if not file_path.startswith("file://")
-            else file_path
-        )
-        self._file_path = uri
+        if file_path.startswith("file://"):
+            file_path = GLib.filename_from_uri(file_path)[0]
+        self._file_path = file_path
+        uri = GLib.filename_to_uri(file_path, None)
         self.doc = Poppler.Document.new_from_file(uri, None)
         self.current_page_idx = 0
         self.bbox = None
@@ -366,11 +364,7 @@ class PDFCanvas(Gtk.DrawingArea):
         if not self.page:
             return False
 
-        src_path = self._file_path
-        if src_path.startswith("file://"):
-            src_path = src_path[len("file://"):]
-
-        reader = PdfReader(src_path)
+        reader = PdfReader(self._file_path)
         writer = PdfWriter()
 
         # region in view coordinates (as seen on screen), in points
