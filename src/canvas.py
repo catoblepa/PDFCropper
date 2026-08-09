@@ -19,6 +19,7 @@ class PDFCanvas(Gtk.DrawingArea):
         self.doc = None
         self.page = None
         self._file_path = None
+        self.current_page_idx = 0
         self.scale = 1.0
         self.rotation = 0
         self._layout_cache = None
@@ -37,6 +38,7 @@ class PDFCanvas(Gtk.DrawingArea):
 
         self.on_selection_completed = None
         self.on_zoom_changed = None
+        self.on_page_changed = None
 
         self.set_draw_func(self.on_draw)
 
@@ -63,6 +65,7 @@ class PDFCanvas(Gtk.DrawingArea):
         )
         self._file_path = uri
         self.doc = Poppler.Document.new_from_file(uri, None)
+        self.current_page_idx = 0
         self.bbox = None
         self.scale = 1.0
         self.rotation = 0
@@ -159,11 +162,35 @@ class PDFCanvas(Gtk.DrawingArea):
     def update_page(self):
         if not self.doc:
             return
-        self.page = self.doc.get_page(0)
+        self.page = self.doc.get_page(self.current_page_idx)
         self._layout_cache = None
         self._render_cache = None
         self.update_canvas_size()
         self.queue_draw()
+
+    def get_page_count(self):
+        if self.doc:
+            return self.doc.get_n_pages()
+        return 1
+
+    def get_current_page(self):
+        return self.current_page_idx
+
+    def go_to_page(self, idx):
+        if not self.doc:
+            return
+        count = self.get_page_count()
+        idx = max(0, min(idx, count - 1))
+        if idx == self.current_page_idx:
+            return
+        self.current_page_idx = idx
+        self._layout_cache = None
+        self._render_cache = None
+        self.page = self.doc.get_page(idx)
+        self.update_canvas_size()
+        self.queue_draw()
+        if self.on_page_changed:
+            self.on_page_changed(idx, count)
 
     def update_canvas_size(self):
         if self.page:
@@ -236,15 +263,21 @@ class PDFCanvas(Gtk.DrawingArea):
     def tesseract_available():
         return shutil.which("tesseract") is not None
 
-    def ocr_region(self, x0, top, x1, bottom, lang):
-        """Run tesseract OCR on the selected region (rotation aware)."""
-        if not self.page:
+    def ocr_region(self, x0, top, x1, bottom, lang, page=None, scale=None):
+        """Run tesseract OCR on the selected region (rotation aware).
+
+        page/scale are captured by the caller so this can run in a thread
+        even if the canvas page changes in the meantime.
+        """
+        page = page if page is not None else self.page
+        scale = scale if scale is not None else self.scale
+        if not page:
             return ""
         if x1 - x0 <= 0 or bottom - top <= 0:
             return ""
 
-        scale = max(self.scale, 2.0)
-        pw, ph = self.page.get_size()
+        scale = max(scale, 2.0)
+        pw, ph = page.get_size()
         vw, vh = pw, ph
         if self.rotation in (90, 270):
             vw, vh = ph, pw
@@ -266,11 +299,21 @@ class PDFCanvas(Gtk.DrawingArea):
         elif self.rotation == 270:
             context.translate(0, pw)
             context.rotate(-math.pi / 2)
-        self.page.render(context)
+        page.render(context)
 
-        # bbox corners in widget coordinates
-        wx0, wy0 = self.page_to_widget(x0, top)
-        wx1, wy1 = self.page_to_widget(x1, bottom)
+        # bbox corners in view coordinates, using captured page/scale
+        def to_view(px, py):
+            W, H = page.get_size()
+            if self.rotation == 90:
+                return (H - py) * scale, px * scale
+            if self.rotation == 180:
+                return (W - px) * scale, (H - py) * scale
+            if self.rotation == 270:
+                return py * scale, (W - px) * scale
+            return px * scale, py * scale
+
+        wx0, wy0 = to_view(x0, top)
+        wx1, wy1 = to_view(x1, bottom)
         rx = min(wx0, wx1)
         ry = min(wy0, wy1)
         rw = abs(wx1 - wx0)
@@ -308,10 +351,13 @@ class PDFCanvas(Gtk.DrawingArea):
                 except OSError:
                     pass
 
-    def save_cropped_pdf(self, output_path, x0, top, x1, bottom):
-        """Save a cropped copy of the page using pypdf (vector crop).
+    def save_cropped_pdf(self, output_path, x0, top, x1, bottom, all_pages=True):
+        """Save a cropped copy using pypdf (vector crop).
 
-        The output is rotated exactly as shown on screen.
+        The region is the one selected on the current page. If all_pages is
+        True it is applied to every page, clamped to each page's bounds;
+        otherwise only the current page is cropped. The current rotation is
+        applied as shown on screen.
         """
         if not self.doc or self.bbox is None or not self._file_path:
             return False
@@ -328,36 +374,42 @@ class PDFCanvas(Gtk.DrawingArea):
             src_path = src_path[len("file://"):]
 
         reader = PdfReader(src_path)
-        page = reader.pages[0]
+        writer = PdfWriter()
 
-        # rotate the page content as shown on screen
-        if self.rotation:
-            page.rotate(self.rotation)
-            page.transfer_rotation_to_content()
-
-        pw, ph = self.page.get_size()
-        # rotated mediabox dimensions (bottom-left origin in PDF user space)
-        mw, mh = pw, ph
-        if self.rotation in (90, 270):
-            mw, mh = ph, pw
-
-        # bbox corners in view coordinates (as seen on screen), in points
+        # region in view coordinates (as seen on screen), in points
         wx0, wy0 = self.page_to_widget(x0, top)
         wx1, wy1 = self.page_to_widget(x1, bottom)
         s = self.scale
         v_left, v_right = sorted([wx0 / s, wx1 / s])
         v_top, v_bottom = sorted([wy0 / s, wy1 / s])
 
-        # cropbox in PDF user space (bottom-left origin) of the rotated box
-        left = v_left
-        lower = mh - v_bottom
-        right = v_right
-        upper = mh - v_top
+        pages = range(len(reader.pages))
+        if not all_pages:
+            pages = [self.current_page_idx]
 
-        page.cropbox.lower_left = (left, lower)
-        page.cropbox.upper_right = (right, upper)
-        writer = PdfWriter()
-        writer.add_page(page)
+        for idx in pages:
+            page = reader.pages[idx]
+
+            # rotate the page content as shown on screen
+            if self.rotation:
+                page.rotate(self.rotation)
+                page.transfer_rotation_to_content()
+
+            # real page size after rotation (pypdf mediabox, bottom-left origin)
+            mb = page.mediabox
+            mw = float(mb.upper_right[0])
+            mh = float(mb.upper_right[1])
+
+            # clamp the visual region to this page's bounds
+            left = max(0.0, min(v_left, mw))
+            right = max(0.0, min(v_right, mw))
+            lower = max(0.0, mh - min(v_bottom, mh))
+            upper = max(0.0, mh - min(v_top, mh))
+
+            page.cropbox.lower_left = (left, lower)
+            page.cropbox.upper_right = (right, upper)
+            writer.add_page(page)
+
         with open(output_path, "wb") as f:
             writer.write(f)
         return True

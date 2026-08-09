@@ -40,6 +40,18 @@ msgstr "Ruota in senso orario"
 msgid "Rotate counterclockwise"
 msgstr "Ruota in senso antiorario"
 
+msgid "Crop PDF"
+msgstr "Ritaglia il PDF"
+
+msgid "Do you want to crop the current page or all pages?"
+msgstr "Vuoi ritagliare la pagina corrente o tutte le pagine?"
+
+msgid "Current page"
+msgstr "Pagina corrente"
+
+msgid "All pages"
+msgstr "Tutte le pagine"
+
 msgid "Save cropped PDF"
 msgstr "Salva il PDF ritagliato"
 
@@ -111,6 +123,15 @@ msgstr "Esci"
 
 msgid "Toggle side panel"
 msgstr "Mostra/nascondi pannello laterale"
+
+msgid "Previous page"
+msgstr "Pagina precedente"
+
+msgid "Next page"
+msgstr "Pagina successiva"
+
+msgid "Navigation"
+msgstr "Navigazione"
 
 msgid "Keyboard shortcuts"
 msgstr "Scorciatoie da tastiera"

@@ -21,3 +21,6 @@ venv/
 *.swp
 *~
 .DS_Store
+
+# Test pdf files
+test*.pdf

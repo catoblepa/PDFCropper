@@ -21,6 +21,14 @@ def show_shortcuts(parent):
         general.add(Adw.ShortcutsItem(title=title, accelerator=trigger))
     dialog.add(general)
 
+    nav = Adw.ShortcutsSection(title=_("Navigation"))
+    for title, trigger in (
+        (_("Previous page"), "Page_Up"),
+        (_("Next page"), "Page_Down"),
+    ):
+        nav.add(Adw.ShortcutsItem(title=title, accelerator=trigger))
+    dialog.add(nav)
+
     zoom = Adw.ShortcutsSection(title=_("Zoom"))
     for title, trigger in (
         (_("Zoom in"), "<primary>plus"),

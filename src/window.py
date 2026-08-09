@@ -85,6 +85,20 @@ class MainWindow(Adw.ApplicationWindow):
         self.btn_rotate.set_sensitive(False)
         self.header_bar.pack_start(self.btn_rotate)
 
+        self.btn_prev_page = Gtk.Button(icon_name="go-previous-symbolic")
+        self.btn_prev_page.set_tooltip_text(_("Previous page"))
+        self.btn_prev_page.connect("clicked", self.on_prev_page_clicked)
+        self.btn_prev_page.set_sensitive(False)
+
+        self.lbl_page = Gtk.Label(label="")
+        self.lbl_page.add_css_class("dim-label")
+        self.lbl_page.set_visible(False)
+
+        self.btn_next_page = Gtk.Button(icon_name="go-next-symbolic")
+        self.btn_next_page.set_tooltip_text(_("Next page"))
+        self.btn_next_page.connect("clicked", self.on_next_page_clicked)
+        self.btn_next_page.set_sensitive(False)
+
         self.btn_save_crop = Gtk.Button(label=_("Save cropped PDF"))
         self.btn_save_crop.set_icon_name("crop-symbolic")
         self.btn_save_crop.set_tooltip_text(_("Save cropped PDF"))
@@ -93,15 +107,15 @@ class MainWindow(Adw.ApplicationWindow):
         self.btn_save_crop.add_css_class("suggested-action")
         self.header_bar.pack_start(self.btn_save_crop)
 
-        # Sidebar toggle (right side, next to the panel)
+        # Sidebar toggle
         self.btn_toggle_sidebar = Gtk.ToggleButton()
         self.btn_toggle_sidebar.set_icon_name("sidebar-show-symbolic")
         self.btn_toggle_sidebar.set_tooltip_text(_("Toggle side panel"))
         self.btn_toggle_sidebar.add_css_class("flat")
         self.btn_toggle_sidebar.add_css_class("sidebar-toggle")
         self.btn_toggle_sidebar.connect("toggled", self.on_toggle_sidebar)
-        self.header_bar.pack_end(self.btn_toggle_sidebar)
 
+        # Sidebar toggle, page navigation, then menu (right side)
         self.settings = Gio.Settings.new("io.github.catoblepa.PDFCropper")
         sidebar_open = self.settings.get_boolean("sidebar-open")
         self.btn_toggle_sidebar.set_active(sidebar_open)
@@ -111,7 +125,13 @@ class MainWindow(Adw.ApplicationWindow):
         self.menu_btn.set_icon_name("open-menu-symbolic")
         self.menu_btn.set_tooltip_text(_("Menu"))
         self.menu_btn.set_menu_model(self._build_menu_model())
+
+        # Right side, from rightmost: toggle sidebar, menu, page navigation
+        self.header_bar.pack_end(self.btn_toggle_sidebar)
         self.header_bar.pack_end(self.menu_btn)
+        self.header_bar.pack_end(self.btn_next_page)
+        self.header_bar.pack_end(self.lbl_page)
+        self.header_bar.pack_end(self.btn_prev_page)
 
         # Paned canvas | side panel (always visible)
         self.paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
@@ -144,6 +164,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.canvas = PDFCanvas()
         self.canvas.on_selection_completed = self.on_bbox_extracted
         self.canvas.on_zoom_changed = self.on_zoom_changed
+        self.canvas.on_page_changed = self.on_page_changed
         scroll.set_child(self.canvas)
 
         self.document_scroll = scroll
@@ -485,6 +506,18 @@ class MainWindow(Adw.ApplicationWindow):
                 Gtk.CallbackAction.new(self._on_toggle_sidebar_shortcut),
             )
         )
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("Page_Down"),
+                Gtk.CallbackAction.new(self._on_next_page_shortcut),
+            )
+        )
+        shortcuts.add_shortcut(
+            Gtk.Shortcut.new(
+                Gtk.ShortcutTrigger.parse_string("Page_Up"),
+                Gtk.CallbackAction.new(self._on_prev_page_shortcut),
+            )
+        )
         self.add_controller(shortcuts)
 
         self._updating_spins = False
@@ -492,6 +525,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._current_coords = ""
         self._fit_width_pending = None
         self._spin_to_key = {s: k for k, s in self.coord_spins.items()}
+        self._crop_all_pages = True
 
         self.connect("map", self._on_map)
 
@@ -549,14 +583,20 @@ class MainWindow(Adw.ApplicationWindow):
     def _ocr_text(self, x0, top, x1, bottom):
         if not PDFCanvas.tesseract_available():
             return ""
+        page = self.canvas.page
+        scale = self.canvas.scale
         lang = self._selected_ocr_code()
         if lang == _OCR_AUTO:
             for code in PDFCanvas.get_ocr_languages():
-                text = self.canvas.ocr_region(x0, top, x1, bottom, code)
+                text = self.canvas.ocr_region(
+                    x0, top, x1, bottom, code, page=page, scale=scale
+                )
                 if text:
                     return text
             return ""
-        return self.canvas.ocr_region(x0, top, x1, bottom, lang)
+        return self.canvas.ocr_region(
+            x0, top, x1, bottom, lang, page=page, scale=scale
+        )
 
     def on_shortcuts_activated(self, action, param):
         show_shortcuts(self)
@@ -639,6 +679,8 @@ class MainWindow(Adw.ApplicationWindow):
         self.btn_rotate_left.set_sensitive(True)
         self.btn_save_crop.set_sensitive(False)
         self.on_zoom_changed(self.canvas.scale)
+        self.lbl_page.set_visible(True)
+        self.on_page_changed(self.canvas.get_current_page(), self.canvas.get_page_count())
 
         size = self.canvas.get_page_size()
         if size:
@@ -684,6 +726,21 @@ class MainWindow(Adw.ApplicationWindow):
         if self.canvas.page is not None:
             self.canvas.rotate(-90)
 
+    def on_prev_page_clicked(self, btn):
+        self.canvas.go_to_page(self.canvas.get_current_page() - 1)
+
+    def on_next_page_clicked(self, btn):
+        self.canvas.go_to_page(self.canvas.get_current_page() + 1)
+
+    def on_page_changed(self, idx, count):
+        self.lbl_page.set_text(f"{idx + 1} / {count}")
+        self.btn_prev_page.set_sensitive(idx > 0)
+        self.btn_next_page.set_sensitive(idx < count - 1)
+        if self.canvas.bbox is not None:
+            self.lbl_info.set_text(_("Drag a box over the PDF to copy bounding box coordinates"))
+            self._extracted_text = ""
+            self._set_text_source(None)
+
     def on_toggle_sidebar(self, btn):
         if hasattr(self, "settings"):
             self.settings.set_boolean("sidebar-open", btn.get_active())
@@ -707,6 +764,37 @@ class MainWindow(Adw.ApplicationWindow):
         GLib.idle_add(self._apply_panel_position)
 
     def on_save_crop_clicked(self, btn):
+        if self.canvas.bbox is None:
+            return
+        if self.canvas.get_page_count() > 1:
+            dialog = Adw.AlertDialog()
+            dialog.set_heading(_("Crop PDF"))
+            dialog.set_body(
+                _("Do you want to crop the current page or all pages?")
+            )
+            dialog.add_response("current", _("Current page"))
+            dialog.add_response("all", _("All pages"))
+            dialog.set_response_appearance("all", Adw.ResponseAppearance.SUGGESTED)
+            dialog.set_default_response("all")
+            dialog.set_close_response("current")
+            dialog.choose(self, None, self._on_crop_scope_chosen)
+        else:
+            self._open_save_crop_dialog()
+
+    def _on_crop_scope_chosen(self, dialog, result):
+        try:
+            scope = dialog.choose_finish(result)
+        except Exception:
+            return
+        if scope == "all":
+            self._crop_all_pages = True
+        elif scope == "current":
+            self._crop_all_pages = False
+        else:
+            return
+        self._open_save_crop_dialog()
+
+    def _open_save_crop_dialog(self):
         if self.canvas.bbox is None:
             return
         dialog = Gtk.FileDialog()
@@ -739,7 +827,10 @@ class MainWindow(Adw.ApplicationWindow):
             if not path:
                 return
             x0, top, x1, bottom = self.canvas.bbox
-            if self.canvas.save_cropped_pdf(path, x0, top, x1, bottom):
+            all_pages = getattr(self, "_crop_all_pages", True)
+            if self.canvas.save_cropped_pdf(
+                path, x0, top, x1, bottom, all_pages=all_pages
+            ):
                 toast = Adw.Toast.new(_("Cropped PDF saved"))
                 toast.set_timeout(2)
                 self.toast_overlay.add_toast(toast)
@@ -782,6 +873,16 @@ class MainWindow(Adw.ApplicationWindow):
         self.btn_toggle_sidebar.set_active(
             not self.btn_toggle_sidebar.get_active()
         )
+        return True
+
+    def _on_prev_page_shortcut(self, *args):
+        if self.canvas.page is not None:
+            self.on_prev_page_clicked(None)
+        return True
+
+    def _on_next_page_shortcut(self, *args):
+        if self.canvas.page is not None:
+            self.on_next_page_clicked(None)
         return True
 
     @staticmethod
@@ -902,18 +1003,21 @@ class MainWindow(Adw.ApplicationWindow):
     def _run_ocr(self, x0, top, x1, bottom):
         if getattr(self, "_ocr_busy", False):
             return
+        page_idx = self.canvas.get_current_page()
         self._ocr_busy = True
 
         def work():
             ocr_text = self._ocr_text(x0, top, x1, bottom)
-            GLib.idle_add(self._ocr_done, x0, top, x1, bottom, ocr_text)
+            GLib.idle_add(self._ocr_done, page_idx, x0, top, x1, bottom, ocr_text)
 
         import threading
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _ocr_done(self, x0, top, x1, bottom, ocr_text):
+    def _ocr_done(self, page_idx, x0, top, x1, bottom, ocr_text):
         self._ocr_busy = False
+        if self.canvas.get_current_page() != page_idx:
+            return
         if ocr_text:
             self._extracted_text = ocr_text
             self.lbl_info.set_text(ocr_text)
