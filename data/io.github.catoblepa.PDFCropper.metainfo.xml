@@ -12,7 +12,7 @@
     <name>catoblepa</name>
   </developer>
   <releases>
-    <release version="0.1.0" date="2026-08-09"/>
+    <release version="0.2.0" date="2026-08-10"/>
   </releases>
   <launchable type="desktop-id">io.github.catoblepa.PDFCropper.desktop</launchable>
   <provides>
