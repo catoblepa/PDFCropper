@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pdfcropper 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-09 20:25+0200\n"
+"POT-Creation-Date: 2026-08-10 03:00+0200\n"
 "PO-Revision-Date: 2026-08-08 00:00+0000\n"
 "Last-Translator: Davide Truffa <davide.truffa@gmail.com>\n"
 "Language-Team: Italian\n"
@@ -16,336 +16,392 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../src/window.py:47 ../src/window.py:68 ../src/window.py:621
-#: ../src/window.py:688 ../data/io.github.catoblepa.PDFCropper.desktop.in:2
+#: ../src/window.py:50 ../src/window.py:76 ../src/window.py:382
+#: ../src/window.py:455 ../data/io.github.catoblepa.PDFCropper.desktop.in:2
 #: ../data/io.github.catoblepa.PDFCropper.metainfo.xml:6
 msgid "PDFCropper"
 msgstr "PDFCropper"
 
-#: ../src/window.py:72 ../src/dialogs.py:15
+#: ../src/window.py:82 ../src/dialogs.py:18
 msgid "Open PDF"
 msgstr "Apri PDF"
 
-#: ../src/window.py:77 ../src/dialogs.py:38
+#: ../src/window.py:87 ../src/dialogs.py:41
 msgid "Rotate counterclockwise"
 msgstr "Ruota in senso antiorario"
 
-#: ../src/window.py:83 ../src/dialogs.py:37
+#: ../src/window.py:93 ../src/dialogs.py:40
 msgid "Rotate clockwise"
 msgstr "Ruota in senso orario"
 
-#: ../src/window.py:89 ../src/dialogs.py:26
+#: ../src/window.py:99 ../src/dialogs.py:29
 msgid "Previous page"
 msgstr "Pagina precedente"
 
-#: ../src/window.py:98 ../src/dialogs.py:27
+#: ../src/window.py:108 ../src/dialogs.py:30
 msgid "Next page"
 msgstr "Pagina successiva"
 
-#: ../src/window.py:102 ../src/window.py:104 ../src/window.py:813
+#: ../src/window.py:112 ../src/window.py:114 ../src/window.py:590
 msgid "Save cropped PDF"
 msgstr "Salva il PDF ritagliato"
 
-#: ../src/window.py:113 ../src/dialogs.py:19
+#: ../src/window.py:123 ../src/dialogs.py:22
 msgid "Toggle side panel"
 msgstr "Mostra/nascondi pannello laterale"
 
-#: ../src/window.py:126
+#: ../src/window.py:136
 msgid "Menu"
 msgstr "Menu"
 
-#: ../src/window.py:149
+#: ../src/window.py:159
 msgid "Open a PDF"
 msgstr "Apri un PDF"
 
-#: ../src/window.py:150
+#: ../src/window.py:160
 msgid "Drag and drop documents here"
 msgstr "Trascina qui i documenti"
 
-#: ../src/window.py:153
+#: ../src/window.py:163
 msgid "Open…"
 msgstr "Apri…"
 
-#: ../src/window.py:201 ../src/dialogs.py:36
+#: ../src/window.py:211 ../src/dialogs.py:39
 msgid "Fit width"
 msgstr "Adatta alla larghezza"
 
-#: ../src/window.py:209 ../src/dialogs.py:34
+#: ../src/window.py:219 ../src/dialogs.py:37
 msgid "Zoom in"
 msgstr "Ingrandisci"
 
-#: ../src/window.py:217 ../src/dialogs.py:35
+#: ../src/window.py:227 ../src/dialogs.py:38
 msgid "Zoom out"
 msgstr "Riduci"
 
-#: ../src/window.py:259
-msgid "Coordinate fields"
-msgstr "Campi coordinate"
-
-#: ../src/window.py:276
-msgid "left"
-msgstr "sinistra"
-
-#: ../src/window.py:277
-msgid "top"
-msgstr "alto"
-
-#: ../src/window.py:278
-msgid "right"
-msgstr "destra"
-
-#: ../src/window.py:279
-msgid "bottom"
-msgstr "basso"
-
-#: ../src/window.py:280
-msgid "width"
-msgstr "larghezza"
-
-#: ../src/window.py:281
-msgid "height"
-msgstr "altezza"
-
-#: ../src/window.py:297
-msgid "Lock this coordinate"
-msgstr "Blocca questa coordinata"
-
-#: ../src/window.py:328
-msgid "Extracted text"
-msgstr "Testo estratto"
-
-#: ../src/window.py:341
-msgid "Copy extracted text"
-msgstr "Copia il testo estratto"
-
-#: ../src/window.py:357 ../src/window.py:708 ../src/window.py:752
-msgid "Drag a box over the PDF to copy bounding box coordinates"
-msgstr "Trascina un rettangolo sul PDF per copiare le coordinate del riquadro"
-
-#: ../src/window.py:387
-msgid "Coordinates"
-msgstr "Coordinate"
-
-#: ../src/window.py:394
-msgid "Copy coordinates"
-msgstr "Copia le coordinate"
-
-#: ../src/window.py:423 ../src/window.py:1006 ../src/dialogs.py:192
-msgid "OCR"
-msgstr "OCR"
-
-#: ../src/window.py:429
-msgid "Language:"
-msgstr "Lingua:"
-
-#: ../src/window.py:551
+#: ../src/window.py:317
 msgid "_Keyboard Shortcuts"
 msgstr "_Scorciatoie da tastiera"
 
-#: ../src/window.py:552
+#: ../src/window.py:318
 msgid "_Help"
 msgstr "_Aiuto"
 
-#: ../src/window.py:556
+#: ../src/window.py:322
 msgid "_About PDFCropper"
 msgstr "_Informazioni su PDFCropper"
 
-#: ../src/window.py:567
+#: ../src/window.py:333
 msgid "Auto"
 msgstr "Auto"
 
-#: ../src/window.py:624 ../data/io.github.catoblepa.PDFCropper.metainfo.xml:12
+#: ../src/window.py:385 ../data/io.github.catoblepa.PDFCropper.metainfo.xml:12
 msgid "catoblepa"
 msgstr "catoblepa"
 
-#: ../src/window.py:626 ../data/io.github.catoblepa.PDFCropper.desktop.in:3
+#: ../src/window.py:387 ../data/io.github.catoblepa.PDFCropper.desktop.in:3
 #: ../data/io.github.catoblepa.PDFCropper.metainfo.xml:7
 msgid "Crop, inspect and extract text from PDF regions"
 msgstr "Ritaglia, ispeziona ed estrai testo da aree di un PDF"
 
-#: ../src/window.py:682
-msgid "Unable to open the file"
-msgstr "Impossibile aprire il file"
-
-#: ../src/window.py:783
-msgid "Crop PDF"
-msgstr "Ritaglia il PDF"
-
-#: ../src/window.py:785
-msgid "Do you want to crop the current page or all pages?"
-msgstr "Vuoi ritagliare la pagina corrente o tutte le pagine?"
-
-#: ../src/window.py:787
-msgid "Current page"
-msgstr "Pagina corrente"
-
-#: ../src/window.py:788
-msgid "All pages"
-msgstr "Tutte le pagine"
-
-#: ../src/window.py:816
+#: ../src/window.py:416
 msgid "PDF documents"
 msgstr "Documenti PDF"
 
-#: ../src/window.py:844
+#: ../src/window.py:449
+msgid "Unable to open the file"
+msgstr "Impossibile aprire il file"
+
+#: ../src/window.py:475 ../src/window.py:530 ../src/panels.py:136
+msgid "Drag a box over the PDF to copy bounding box coordinates"
+msgstr "Trascina un rettangolo sul PDF per copiare le coordinate del riquadro"
+
+#: ../src/window.py:559
+msgid "Crop PDF"
+msgstr "Ritaglia il PDF"
+
+#: ../src/window.py:561
+msgid "Do you want to crop the current page or all pages?"
+msgstr "Vuoi ritagliare la pagina corrente o tutte le pagine?"
+
+#: ../src/window.py:563
+msgid "Current page"
+msgstr "Pagina corrente"
+
+#: ../src/window.py:564
+msgid "All pages"
+msgstr "Tutte le pagine"
+
+#: ../src/window.py:620
 msgid "Cropped PDF saved"
 msgstr "PDF ritagliato salvato"
 
-#: ../src/window.py:848
+#: ../src/window.py:624 ../src/window.py:628
 msgid "Unable to save cropped PDF"
 msgstr "Impossibile salvare il PDF ritagliato"
 
-#: ../src/window.py:1055
+#: ../src/window.py:748 ../src/dialogs.py:142
+msgid "OCR"
+msgstr "OCR"
+
+#: ../src/window.py:785
 msgid "(no text)"
 msgstr "(nessun testo)"
 
-#: ../src/window.py:1063
+#: ../src/window.py:793
 msgid "Text copied to clipboard"
 msgstr "Testo copiato negli appunti"
 
-#: ../src/window.py:1071
+#: ../src/window.py:801 ../src/window.py:810
 msgid "Coordinates copied to clipboard"
 msgstr "Coordinate copiate negli appunti"
 
-#: ../src/dialogs.py:13
+#: ../src/dialogs.py:16
 msgid "General"
 msgstr "Generale"
 
-#: ../src/dialogs.py:16
+#: ../src/dialogs.py:19
 msgid "Close window"
 msgstr "Chiudi finestra"
 
-#: ../src/dialogs.py:17
+#: ../src/dialogs.py:20
 msgid "Quit"
 msgstr "Esci"
 
-#: ../src/dialogs.py:18 ../src/dialogs.py:85
+#: ../src/dialogs.py:21 ../src/dialogs.py:88
 msgid "Help"
 msgstr "Aiuto"
 
-#: ../src/dialogs.py:24
+#: ../src/dialogs.py:27
 msgid "Navigation"
 msgstr "Navigazione"
 
-#: ../src/dialogs.py:32
+#: ../src/dialogs.py:35
 msgid "Zoom"
 msgstr "Zoom"
 
-#: ../src/dialogs.py:39
+#: ../src/dialogs.py:42
 msgid "Keyboard shortcuts"
 msgstr "Scorciatoie da tastiera"
 
-#: ../src/dialogs.py:42
+#: ../src/dialogs.py:45
 msgid "Pan"
 msgstr "Trascina"
 
-#: ../src/dialogs.py:43
+#: ../src/dialogs.py:46
 msgid "Middle click + drag"
 msgstr "Clic centrale + trascina"
 
-#: ../src/dialogs.py:107
-msgid "How to use the extracted coordinates"
-msgstr "Come usare le coordinate estratte"
+#: ../src/dialogs.py:110
+msgid "How to use PDFCropper"
+msgstr "Come usare PDFCropper"
 
-#: ../src/dialogs.py:114
+#: ../src/dialogs.py:116
+msgid "Crop a PDF"
+msgstr "Ritaglia un PDF"
+
+#: ../src/dialogs.py:118
 msgid ""
-"Draw a box over the text you are interested in. PDFCropper copies four "
-"numbers to the clipboard:\n"
+"Draw a box over the region you want to keep, then press <b>Save cropped PDF</"
+"b>. The result is a vector (lossless) copy of the selected area.\n"
 "\n"
-"<span font_family='monospace'>(x0, top, x1, bottom)</span>\n"
-"\n"
-"They define the bounding box of the selected area in PDF points (1 point = "
-"1/72 inch), measured from the top-left corner of the page. <b>x0</b> is the "
-"left edge, <b>top</b> the upper edge, <b>x1</b> the right edge and "
-"<b>bottom</b> the lower edge of the box."
+"On a single-page document the cropped file is saved immediately. On a multi-"
+"page document you choose between the current page and all pages; the same "
+"region is applied to every page, clamped to each page's bounds. The on-"
+"screen rotation is applied to the output."
 msgstr ""
-"Disegna un riquadro sul testo che ti interessa. PDFCropper copia quattro "
-"numeri negli appunti:\n"
+"Disegna un riquadro sulla regione che vuoi conservare, poi premi <b>Salva "
+"PDF ritagliato</b>. Il risultato è una copia vettoriale (senza perdita) "
+"dell'area selezionata.\n"
 "\n"
-"<span font_family='monospace'>(x0, top, x1, bottom)</span>\n"
-"\n"
-"Definiscono il riquadro di delimitazione dell'area selezionata in punti PDF "
-"(1 punto = 1/72 di pollice), misurati dall'angolo in alto a sinistra della "
-"pagina. <b>x0</b> è il bordo sinistro, <b>top</b> il bordo superiore, <b>x1</"
-"b> il bordo destro e <b>bottom</b> il bordo inferiore del riquadro."
+"In un documento a pagina singola il file ritagliato viene salvato subito. In "
+"un documento multipagina scegli tra la pagina corrente e tutte le pagine; la "
+"stessa regione viene applicata a ogni pagina, limitata ai bordi di ciascuna. "
+"La rotazione mostrata a schermo viene applicata al risultato."
 
-#: ../src/dialogs.py:134
+#: ../src/dialogs.py:131
+msgid "Text recognition"
+msgstr "Riconoscimento del testo"
+
+#: ../src/dialogs.py:133
+msgid ""
+"After selecting a region, PDFCropper extracts its selectable text using "
+"Poppler, which follows the reading order of the document (horizontal, "
+"vertical or rotated text). The result appears in the Extracted text section."
+msgstr ""
+"Dopo aver selezionato una regione, PDFCropper estrae il suo testo "
+"selezionabile usando Poppler, che segue l'ordine di lettura del documento "
+"(testo orizzontale, verticale o ruotato). Il risultato appare nella sezione "
+"Testo estratto."
+
+#: ../src/dialogs.py:144
+msgid ""
+"When the selected region has no selectable text (scanned pages), tesseract "
+"OCR runs automatically. Pick a language in the OCR section of the side panel "
+"— the installed languages are listed there. 'Auto' matches the system "
+"locale. A badge marks results that come from OCR."
+msgstr ""
+"Quando la regione selezionata non ha testo selezionabile (pagine "
+"scansionate), tesseract OCR viene eseguito automaticamente. Scegli una "
+"lingua nella sezione OCR del pannello laterale — le lingue installate sono "
+"elencate lì. 'Auto' usa la lingua di sistema. Un badge segnala i risultati "
+"che provengono dall'OCR."
+
+#: ../src/dialogs.py:154
+msgid "Selecting and editing the box"
+msgstr "Selezionare e modificare il riquadro"
+
+#: ../src/dialogs.py:156
+msgid ""
+"Draw a new box with the left mouse button. Drag an existing box to move it, "
+"or use its 8 handles to resize it. The lock buttons in the Coordinate "
+"section pin individual values so that editing a coordinate keeps the locked "
+"one fixed. Width and height are derived from the four edges."
+msgstr ""
+"Disegna un nuovo riquadro con il tasto sinistro del mouse. Trascina un "
+"riquadro esistente per spostarlo, oppure usa le sue 8 maniglie per "
+"ridimensionarlo. I pulsanti di blocco nella sezione Coordinate fissano i "
+"singoli valori, così che modificare una coordinata mantenga ferma quella "
+"bloccata. Larghezza e altezza derivano dai quattro bordi."
+
+#: ../src/dialogs.py:166
+msgid "Navigation and rotation"
+msgstr "Navigazione e rotazione"
+
+#: ../src/dialogs.py:168
+msgid ""
+"Flip through pages with the header buttons or Page Up / Page Down. Rotate "
+"clockwise or counterclockwise (Ctrl+Right / Ctrl+Left); the current page "
+"keeps its rotation. The selected box and its text are re-evaluated after "
+"each rotation."
+msgstr ""
+"Sfoglia le pagine con i pulsanti nell'intestazione o con Page Up / Page "
+"Down. Ruota in senso orario o antiorario (Ctrl+Destra / Ctrl+Sinistra); la "
+"pagina corrente mantiene la sua rotazione. Il riquadro selezionato e il suo "
+"testo vengono rivalutati dopo ogni rotazione."
+
+#: ../src/dialogs.py:177
+msgid "Copying the coordinates"
+msgstr "Copiare le coordinate"
+
+#: ../src/dialogs.py:179
+msgid ""
+"The copy button in the Coordinate section offers two formats, both in PDF "
+"points (1 point = 1/72 inch) from the top-left corner of the page:\n"
+"\n"
+"<span font_family='monospace'>(left, top, right, bottom)</span>\n"
+"<span font_family='monospace'>x, y, width, height</span>"
+msgstr ""
+"Il pulsante di copia nella sezione Coordinate offre due formati, entrambi in "
+"punti PDF (1 punto = 1/72 di pollice) dall'angolo in alto a sinistra della "
+"pagina:\n"
+"\n"
+"<span font_family='monospace'>(sinistra, alto, destra, basso)</span>\n"
+"<span font_family='monospace'>x, y, larghezza, altezza</span>"
+
+#: ../src/dialogs.py:191
 msgid ""
 "Example: a box from (72, 144) to (360, 288) gives\n"
-"<span font_family='monospace'>(72, 144, 360, 288)</span>"
+"<span font_family='monospace'>(72, 144, 360, 288)</span>\n"
+"<span font_family='monospace'>72, 144, 288, 144</span>"
 msgstr ""
-"Esempio: un riquadro da (72, 144) a (360, 288) produce\n"
-"<span font_family='monospace'>(72, 144, 360, 288)</span>"
+"Esempio: un riquadro da (72, 144) a (360, 288) dà\n"
+"<span font_family='monospace'>(72, 144, 360, 288)</span>\n"
+"<span font_family='monospace'>72, 144, 288, 144</span>"
 
-#: ../src/dialogs.py:145
-msgid "Use in the command line"
-msgstr "Uso dalla riga di comando"
-
-#: ../src/dialogs.py:147
-msgid ""
-"pdftotext from poppler-utils can crop a region directly. It needs the top-"
-"left corner plus the width and height:"
-msgstr ""
-"pdftotext di poppler-utils può ritagliare direttamente una regione. Richiede "
-"l'angolo in alto a sinistra più larghezza e altezza:"
-
-#: ../src/dialogs.py:153
+#: ../src/dialogs.py:203
 msgid "pdftotext (command line)"
 msgstr "pdftotext (riga di comando)"
 
-#: ../src/dialogs.py:157
+#: ../src/dialogs.py:207
 msgid "pdfplumber (Python)"
 msgstr "pdfplumber (Python)"
 
-#: ../src/dialogs.py:165
+#: ../src/dialogs.py:215
 msgid "PyMuPDF / fitz (Python)"
 msgstr "PyMuPDF / fitz (Python)"
 
-#: ../src/dialogs.py:173
+#: ../src/dialogs.py:223
 msgid "Camelot (Python, tables)"
 msgstr "Camelot (Python, tabelle)"
 
-#: ../src/dialogs.py:182
+#: ../src/dialogs.py:232
 msgid "Tabula (Python, tables)"
 msgstr "Tabula (Python, tabelle)"
 
-#: ../src/dialogs.py:194
-msgid ""
-"When the region contains no selectable text (for example a scanned page), "
-"PDFCropper runs tesseract automatically. Pick the language in the side "
-"panel; a badge appears when the result comes from OCR."
-msgstr ""
-"Quando l'area non contiene testo selezionabile (ad esempio una pagina "
-"scansionata), PDFCropper esegue automaticamente tesseract. Scegli la lingua "
-"nel pannello laterale; un badge appare quando il risultato proviene dall'OCR."
-
-#: ../src/dialogs.py:202
-msgid "Crop"
-msgstr "Ritaglio"
-
-#: ../src/dialogs.py:204
-msgid ""
-"Draw a box, then use Save cropped PDF. On a multi-page document you can "
-"choose to crop only the current page or all pages; the current rotation is "
-"applied to the result."
-msgstr ""
-"Disegna un riquadro, poi usa Salva il PDF ritagliato. Su un documento "
-"multipagina puoi scegliere di ritagliare solo la pagina corrente o tutte le "
-"pagine; la rotazione corrente viene applicata al risultato."
-
-#: ../src/dialogs.py:211
+#: ../src/dialogs.py:242
 msgid "Note"
 msgstr "Nota"
 
-#: ../src/dialogs.py:213
+#: ../src/dialogs.py:244
 msgid ""
-"width = x1 - x0 and height = bottom - top. Tabula expects (top, left, "
-"bottom, right) order; the other tools use (left, top, right, bottom), same "
-"as what PDFCropper copies."
+"width = x1 - x0 and height = bottom - top. The <span "
+"font_family='monospace'>(left, top, right, bottom)</span> format matches "
+"pdfplumber, PyMuPDF and Camelot; <span font_family='monospace'>x, y, width, "
+"height</span> matches pdftotext. Tabula expects <span "
+"font_family='monospace'>(top, left, bottom, right)</span>."
 msgstr ""
-"width = x1 - x0 e height = bottom - top. Tabula prevede l'ordine (top, left, "
-"bottom, right); gli altri strumenti usano (left, top, right, bottom), come "
-"quello che copia PDFCropper."
+"larghezza = x1 - x0 e altezza = basso - alto. Il formato <span "
+"font_family='monospace'>(sinistra, alto, destra, basso)</span> corrisponde a "
+"pdfplumber, PyMuPDF e Camelot; <span font_family='monospace'>x, y, "
+"larghezza, altezza</span> corrisponde a pdftotext. Tabula si aspetta "
+"l'ordine <span font_family='monospace'>(alto, sinistra, basso, destra)</"
+"span>."
+
+#: ../src/panels.py:15
+msgid "left"
+msgstr "sinistra"
+
+#: ../src/panels.py:16
+msgid "top"
+msgstr "alto"
+
+#: ../src/panels.py:17
+msgid "right"
+msgstr "destra"
+
+#: ../src/panels.py:18
+msgid "bottom"
+msgstr "basso"
+
+#: ../src/panels.py:19
+msgid "width"
+msgstr "larghezza"
+
+#: ../src/panels.py:20
+msgid "height"
+msgstr "altezza"
+
+#: ../src/panels.py:46
+msgid "Coordinate"
+msgstr "Coordinate"
+
+#: ../src/panels.py:49
+msgid "Copy (left, top, right, bottom)"
+msgstr "Copia (sinistra, alto, destra, basso)"
+
+#: ../src/panels.py:50
+msgid "Copy (x, y, width, height)"
+msgstr "Copia (x, y, larghezza, altezza)"
+
+#: ../src/panels.py:53
+msgid "Copy coordinates"
+msgstr "Copia le coordinate"
+
+#: ../src/panels.py:86
+msgid "Lock this coordinate"
+msgstr "Blocca questa coordinata"
+
+#: ../src/panels.py:104
+msgid "Extracted text"
+msgstr "Testo estratto"
+
+#: ../src/panels.py:113
+msgid "Copy extracted text"
+msgstr "Copia il testo estratto"
+
+#: ../src/panels.py:149
+msgid "OCR language"
+msgstr "Lingua OCR"
 
 #: ../data/io.github.catoblepa.PDFCropper.metainfo.xml:9
 msgid ""
@@ -353,9 +409,11 @@ msgid ""
 "any region of a PDF, extract the text and bounding box coordinates, run OCR, "
 "rotate the page and save the cropped result."
 msgstr ""
-"PDFCropper è un'utilità leggera per sviluppatori che consente di disegnare "
-"un riquadro su qualsiasi area di un PDF, estrarre il testo e le coordinate "
-"del riquadro di delimitazione, eseguire l'OCR, ruotare la pagina e salvare "
-"il risultato ritagliato."
-
+"PDFCropper è una utility leggera per sviluppatori che permette di disegnare "
+"un riquadro su qualsiasi regione di un PDF, estrarre il testo e le "
+"coordinate del riquadro, eseguire l'OCR, ruotare la pagina e salvare il "
+"risultato ritagliato.PDFCropper è un'utilità leggera per sviluppatori che "
+"consente di disegnare un riquadro su qualsiasi area di un PDF, estrarre il "
+"testo e le coordinate del riquadro di delimitazione, eseguire l'OCR, ruotare "
+"la pagina e salvare il risultato ritagliato."
 

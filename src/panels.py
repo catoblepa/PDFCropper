@@ -3,7 +3,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gtk, Pango
+from gi.repository import Adw, Gio, Gtk, Pango
 from gettext import gettext as _
 
 
@@ -28,7 +28,6 @@ class SidePanel(Adw.PreferencesPage):
 
         self._build_coord_group(on_coord_changed, on_lock_toggled)
         self._build_text_group()
-        self._build_coord_display_group()
         self._build_ocr_group()
 
     def _header_row(self, title):
@@ -44,7 +43,19 @@ class SidePanel(Adw.PreferencesPage):
 
     def _build_coord_group(self, on_coord_changed, on_lock_toggled):
         group = Adw.PreferencesGroup()
-        header, _header_box = self._header_row(_("Coordinate fields"))
+        header, header_box = self._header_row(_("Coordinate"))
+
+        copy_menu = Gio.Menu()
+        copy_menu.append(_("Copy (left, top, right, bottom)"), "win.copy-coords")
+        copy_menu.append(_("Copy (x, y, width, height)"), "win.copy-coords-wh")
+
+        btn_copy_coords = Gtk.MenuButton(icon_name="edit-copy-symbolic")
+        btn_copy_coords.set_tooltip_text(_("Copy coordinates"))
+        btn_copy_coords.add_css_class("flat")
+        btn_copy_coords.set_valign(Gtk.Align.CENTER)
+        btn_copy_coords.set_menu_model(copy_menu)
+        header_box.append(btn_copy_coords)
+
         group.add(header)
 
         coord_row = Adw.PreferencesRow()
@@ -133,34 +144,9 @@ class SidePanel(Adw.PreferencesPage):
         self.text_scroll.set_child(self.lbl_info)
         text_box.append(self.text_scroll)
 
-    def _build_coord_display_group(self):
-        group = Adw.PreferencesGroup()
-        header, box = self._header_row(_("Coordinates"))
-
-        btn_copy_coords = Gtk.Button(icon_name="edit-copy-symbolic")
-        btn_copy_coords.set_tooltip_text(_("Copy coordinates"))
-        btn_copy_coords.add_css_class("flat")
-        btn_copy_coords.set_valign(Gtk.Align.CENTER)
-        btn_copy_coords.set_action_name("win.copy-coords")
-        box.append(btn_copy_coords)
-        group.add(header)
-
-        display_row = Adw.PreferencesRow()
-        display_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        display_box.add_css_class("side-content-box")
-        display_row.set_child(display_box)
-        group.add(display_row)
-        self.add(group)
-
-        self.lbl_coords = Gtk.Label(label="")
-        self.lbl_coords.set_xalign(0)
-        self.lbl_coords.set_selectable(True)
-        self.lbl_coords.set_halign(Gtk.Align.FILL)
-        display_box.append(self.lbl_coords)
-
     def _build_ocr_group(self):
         group = Adw.PreferencesGroup()
-        header, _header_box = self._header_row(_("OCR"))
+        header, _header_box = self._header_row(_("OCR language"))
         group.add(header)
 
         ocr_row = Adw.PreferencesRow()
@@ -169,10 +155,6 @@ class SidePanel(Adw.PreferencesPage):
         ocr_row.set_child(ocr_row_box)
         group.add(ocr_row)
         self.add(group)
-
-        ocr_lbl = Gtk.Label(label=_("Language:"))
-        ocr_lbl.set_halign(Gtk.Align.START)
-        ocr_row_box.append(ocr_lbl)
 
         self.ocr_model = Gtk.StringList()
         self.ocr_dropdown = Gtk.DropDown.new(self.ocr_model, None)

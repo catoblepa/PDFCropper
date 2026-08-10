@@ -1,5 +1,6 @@
 src/main.py
 src/window.py
 src/dialogs.py
+src/panels.py
 data/io.github.catoblepa.PDFCropper.desktop.in
 data/io.github.catoblepa.PDFCropper.metainfo.xml

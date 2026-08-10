@@ -252,7 +252,6 @@ class MainWindow(Adw.ApplicationWindow):
         self.locks = self.side_panel.locks
         self.lbl_text_source = self.side_panel.lbl_text_source
         self.lbl_info = self.side_panel.lbl_info
-        self.lbl_coords = self.side_panel.lbl_coords
         self.ocr_dropdown = self.side_panel.ocr_dropdown
         self.ocr_model = self.side_panel.ocr_model
 
@@ -297,6 +296,7 @@ class MainWindow(Adw.ApplicationWindow):
             ("toggle-sidebar", self.on_toggle_sidebar_activated),
             ("copy-text", self.on_copy_text_activated),
             ("copy-coords", self.on_copy_coords_activated),
+            ("copy-coords-wh", self.on_copy_coords_wh_activated),
             ("close", self.on_close_activated),
         ]
         for name, callback in actions:
@@ -474,7 +474,6 @@ class MainWindow(Adw.ApplicationWindow):
         self.lbl_info.set_text(
             _("Drag a box over the PDF to copy bounding box coordinates")
         )
-        self.lbl_coords.set_text("")
         self._current_coords = ""
         self._extracted_text = ""
         if self._fit_width_pending is not None:
@@ -740,6 +739,9 @@ class MainWindow(Adw.ApplicationWindow):
     def format_coordinates(self, x0, top, x1, bottom):
         return f"({x0:.0f}, {top:.0f}, {x1:.0f}, {bottom:.0f})"
 
+    def format_coordinates_wh(self, x0, top, x1, bottom):
+        return f"{x0:.0f}, {top:.0f}, {x1 - x0:.0f}, {bottom - top:.0f}"
+
     def _set_text_source(self, source):
         """Show a badge only when the text came from OCR (tesseract)."""
         if source == "ocr":
@@ -774,7 +776,7 @@ class MainWindow(Adw.ApplicationWindow):
     def update_preview(self, x0, top, x1, bottom, text, source=None):
         formatted_str = self.format_coordinates(x0, top, x1, bottom)
         self._current_coords = formatted_str
-        self.lbl_coords.set_text(formatted_str)
+        self._current_bbox = (x0, top, x1, bottom)
         self._extracted_text = text or ""
         clean_text = (text or "").strip()
         if clean_text:
@@ -796,6 +798,15 @@ class MainWindow(Adw.ApplicationWindow):
         if self._current_coords:
             clipboard = self.get_clipboard()
             clipboard.set(self._current_coords)
+            toast = Adw.Toast.new(_("Coordinates copied to clipboard"))
+            toast.set_timeout(2)
+            self.toast_overlay.add_toast(toast)
+
+    def on_copy_coords_wh_activated(self, action, param):
+        if getattr(self, "_current_bbox", None):
+            x0, top, x1, bottom = self._current_bbox
+            clipboard = self.get_clipboard()
+            clipboard.set(self.format_coordinates_wh(x0, top, x1, bottom))
             toast = Adw.Toast.new(_("Coordinates copied to clipboard"))
             toast.set_timeout(2)
             self.toast_overlay.add_toast(toast)

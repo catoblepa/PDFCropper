@@ -107,35 +107,90 @@ def show_help(parent):
     scroll.set_child(box)
 
     # Title inside the content
-    title = Gtk.Label(label=_("How to use the extracted coordinates"))
+    title = Gtk.Label(label=_("How to use PDFCropper"))
     title.set_halign(Gtk.Align.START)
     title.add_css_class("title-2")
     box.append(title)
 
-    intro = Gtk.Label(
-        label=_(
-            "Draw a box over the text you are interested in. PDFCropper "
-            "copies four numbers to the clipboard:\n\n"
-            "<span font_family='monospace'>(x0, top, x1, bottom)</span>\n\n"
-            "They define the bounding box of the selected area in PDF "
-            "points (1 point = 1/72 inch), measured from the top-left "
-            "corner of the page. "
-            "<b>x0</b> is the left edge, <b>top</b> the upper edge, "
-            "<b>x1</b> the right edge and <b>bottom</b> the lower edge "
-            "of the box."
-        )
-    )
-    intro.set_wrap(True)
-    intro.set_xalign(0)
-    intro.set_margin_bottom(4)
-    intro.set_use_markup(True)
-    box.append(intro)
+    box.append(_help_section(
+        _("Crop a PDF"),
+        _(
+            "Draw a box over the region you want to keep, then press "
+            "<b>Save cropped PDF</b>. The result is a vector (lossless) "
+            "copy of the selected area.\n\n"
+            "On a single-page document the cropped file is saved "
+            "immediately. On a multi-page document you choose between the "
+            "current page and all pages; the same region is applied to "
+            "every page, clamped to each page's bounds. The on-screen "
+            "rotation is applied to the output."
+        ),
+        code=False,
+    ))
+
+    box.append(_help_section(
+        _("Text recognition"),
+        _(
+            "After selecting a region, PDFCropper extracts its selectable "
+            "text using Poppler, which follows the reading order of the "
+            "document (horizontal, vertical or rotated text). The result "
+            "appears in the Extracted text section."
+        ),
+        code=False,
+    ))
+
+    box.append(_help_section(
+        _("OCR"),
+        _(
+            "When the selected region has no selectable text (scanned "
+            "pages), tesseract OCR runs automatically. Pick a language in "
+            "the OCR section of the side panel — the installed languages "
+            "are listed there. 'Auto' matches the system locale. A badge "
+            "marks results that come from OCR."
+        ),
+        code=False,
+    ))
+
+    box.append(_help_section(
+        _("Selecting and editing the box"),
+        _(
+            "Draw a new box with the left mouse button. Drag an existing "
+            "box to move it, or use its 8 handles to resize it. The lock "
+            "buttons in the Coordinate section pin individual values so "
+            "that editing a coordinate keeps the locked one fixed. "
+            "Width and height are derived from the four edges."
+        ),
+        code=False,
+    ))
+
+    box.append(_help_section(
+        _("Navigation and rotation"),
+        _(
+            "Flip through pages with the header buttons or Page Up / Page "
+            "Down. Rotate clockwise or counterclockwise (Ctrl+Right / "
+            "Ctrl+Left); the current page keeps its rotation. The selected "
+            "box and its text are re-evaluated after each rotation."
+        ),
+        code=False,
+    ))
+
+    box.append(_help_section(
+        _("Copying the coordinates"),
+        _(
+            "The copy button in the Coordinate section offers two formats, "
+            "both in PDF points (1 point = 1/72 inch) from the top-left "
+            "corner of the page:\n\n"
+            "<span font_family='monospace'>(left, top, right, bottom)</span>\n"
+            "<span font_family='monospace'>x, y, width, height</span>"
+        ),
+        code=False,
+    ))
 
     # Example coordinates box
     example = Gtk.Label(
         label=_(
             "Example: a box from (72, 144) to (360, 288) gives\n"
-            "<span font_family='monospace'>(72, 144, 360, 288)</span>"
+            "<span font_family='monospace'>(72, 144, 360, 288)</span>\n"
+            "<span font_family='monospace'>72, 144, 288, 144</span>"
         )
     )
     example.set_halign(Gtk.Align.START)
@@ -144,14 +199,6 @@ def show_help(parent):
     example.set_use_markup(True)
     box.append(example)
 
-    box.append(_help_section(
-        _("Use in the command line"),
-        _(
-            "pdftotext from poppler-utils can crop a region directly. "
-            "It needs the top-left corner plus the width and height:"
-        ),
-        code=False,
-    ))
     box.append(_help_section(
         _("pdftotext (command line)"),
         "pdftotext -x {x0} -y {top} -W {width} -H {height} input.pdf -",
@@ -192,31 +239,14 @@ def show_help(parent):
         "print(df)",
     ))
     box.append(_help_section(
-        _("OCR"),
-        _(
-            "When the region contains no selectable text (for example a "
-            "scanned page), PDFCropper runs tesseract automatically. Pick the "
-            "language in the side panel; a badge appears when the result "
-            "comes from OCR."
-        ),
-        code=False,
-    ))
-    box.append(_help_section(
-        _("Crop"),
-        _(
-            "Draw a box, then use Save cropped PDF. On a multi-page document "
-            "you can choose to crop only the current page or all pages; the "
-            "current rotation is applied to the result."
-        ),
-        code=False,
-    ))
-    box.append(_help_section(
         _("Note"),
         _(
             "width = x1 - x0 and height = bottom - top. "
-            "Tabula expects (top, left, bottom, right) order; "
-            "the other tools use (left, top, right, bottom), "
-            "same as what PDFCropper copies."
+            "The <span font_family='monospace'>(left, top, right, bottom)</span> "
+            "format matches pdfplumber, PyMuPDF and Camelot; "
+            "<span font_family='monospace'>x, y, width, height</span> "
+            "matches pdftotext. Tabula expects "
+            "<span font_family='monospace'>(top, left, bottom, right)</span>."
         ),
         code=False,
     ))
