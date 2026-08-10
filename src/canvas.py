@@ -16,13 +16,13 @@ class PDFCanvas(Gtk.DrawingArea):
 
     def __init__(self):
         super().__init__()
+        self.add_css_class("pdfcanvas")
         self.doc = None
         self.page = None
         self._file_path = None
         self.current_page_idx = 0
         self.scale = 1.0
         self.rotation = 0
-        self._layout_cache = None
         self._render_cache = None
 
         self.start_x = self.start_y = self.curr_x = self.curr_y = 0
@@ -67,7 +67,6 @@ class PDFCanvas(Gtk.DrawingArea):
         self.bbox = None
         self.scale = 1.0
         self.rotation = 0
-        self._layout_cache = None
         self._render_cache = None
         self.update_page()
 
@@ -161,7 +160,6 @@ class PDFCanvas(Gtk.DrawingArea):
         if not self.doc:
             return
         self.page = self.doc.get_page(self.current_page_idx)
-        self._layout_cache = None
         self._render_cache = None
         self.update_canvas_size()
         self.queue_draw()
@@ -182,9 +180,9 @@ class PDFCanvas(Gtk.DrawingArea):
         if idx == self.current_page_idx:
             return
         self.current_page_idx = idx
-        self._layout_cache = None
         self._render_cache = None
         self.page = self.doc.get_page(idx)
+        self.bbox = None
         self.update_canvas_size()
         self.queue_draw()
         if self.on_page_changed:
@@ -236,12 +234,55 @@ class PDFCanvas(Gtk.DrawingArea):
     def extract_text(self, x0, top, x1, bottom):
         if not self.page:
             return ""
-        ok, rects, text = self._get_layout()
-        if not ok or not rects or len(rects) != len(text):
+        try:
+            ok, rects = self.page.get_text_layout()
+            text = self.page.get_text()
+        except Exception:
+            ok, rects, text = False, None, ""
+        if not (ok and rects and len(rects) == len(text)):
             rect = Poppler.Rectangle()
             rect.x1, rect.y1, rect.x2, rect.y2 = x0, top, x1, bottom
             return self.page.get_text_for_area(rect) or ""
-        return self._reconstruct_text(text, rects, x0, top, x1, bottom)
+
+        bx0, bx1 = min(x0, x1), max(x0, x1)
+        by0, by1 = min(top, bottom), max(top, bottom)
+
+        # keep only chars whose centre is inside the selection, in Poppler's
+        # reading order (handles horizontal, vertical and rotated text)
+        kept = []
+        for char, rect in zip(text, rects):
+            if char == "\n":
+                continue
+            cx = (rect.x1 + rect.x2) / 2
+            cy = (rect.y1 + rect.y2) / 2
+            if (
+                bx0 - 1 <= cx <= bx1 + 1
+                and by0 - 1 <= cy <= by1 + 1
+            ):
+                kept.append((char, rect))
+
+        if not kept:
+            return ""
+
+        # detect orientation: horizontal text has few rows (y), vertical few
+        # columns (x); use the matching axis to split into reading lines
+        ys = {(r.y1 + r.y2) // 2 for _c, r in kept}
+        xs = {(r.x1 + r.x2) // 2 for _c, r in kept}
+        vertical = len(xs) < len(ys)
+
+        lines = {}
+        order = []
+        for char, rect in kept:
+            key = (rect.x1 + rect.x2) // 2 if vertical else (rect.y1 + rect.y2) // 2
+            if key not in lines:
+                order.append(key)
+                lines[key] = []
+            lines[key].append(char)
+
+        out = []
+        for key in sorted(order):
+            out.append("".join(lines[key]))
+        return "\n".join(out).rstrip()
 
     @staticmethod
     def get_ocr_languages():
@@ -261,14 +302,25 @@ class PDFCanvas(Gtk.DrawingArea):
     def tesseract_available():
         return shutil.which("tesseract") is not None
 
-    def ocr_region(self, x0, top, x1, bottom, lang, page=None, scale=None):
+    def ocr_region(self, x0, top, x1, bottom, lang,
+                   doc=None, page_idx=None, rotation=None, scale=None):
         """Run tesseract OCR on the selected region (rotation aware).
 
-        page/scale are captured by the caller so this can run in a thread
-        even if the canvas page changes in the meantime.
+        doc/page_idx/rotation/scale must be captured by the caller so this
+        can run in a worker thread on a private Poppler.Document without
+        touching the shared self.page/self.rotation/self.scale (Poppler is
+        not thread-safe).
         """
-        page = page if page is not None else self.page
+        doc = doc if doc is not None else self.doc
+        if doc is None:
+            return ""
+        page_idx = page_idx if page_idx is not None else self.current_page_idx
+        rotation = rotation if rotation is not None else self.rotation
         scale = scale if scale is not None else self.scale
+        try:
+            page = doc.get_page(page_idx)
+        except Exception:
+            return ""
         if not page:
             return ""
         if x1 - x0 <= 0 or bottom - top <= 0:
@@ -277,7 +329,7 @@ class PDFCanvas(Gtk.DrawingArea):
         scale = max(scale, 2.0)
         pw, ph = page.get_size()
         vw, vh = pw, ph
-        if self.rotation in (90, 270):
+        if rotation in (90, 270):
             vw, vh = ph, pw
         iw = max(1, int(vw * scale))
         ih = max(1, int(vh * scale))
@@ -288,13 +340,13 @@ class PDFCanvas(Gtk.DrawingArea):
         context.set_source_rgb(1, 1, 1)
         context.paint()
         context.scale(scale, scale)
-        if self.rotation == 90:
+        if rotation == 90:
             context.translate(ph, 0)
             context.rotate(math.pi / 2)
-        elif self.rotation == 180:
+        elif rotation == 180:
             context.translate(pw, ph)
             context.rotate(math.pi)
-        elif self.rotation == 270:
+        elif rotation == 270:
             context.translate(0, pw)
             context.rotate(-math.pi / 2)
         page.render(context)
@@ -302,11 +354,11 @@ class PDFCanvas(Gtk.DrawingArea):
         # bbox corners in view coordinates, using captured page/scale
         def to_view(px, py):
             W, H = page.get_size()
-            if self.rotation == 90:
+            if rotation == 90:
                 return (H - py) * scale, px * scale
-            if self.rotation == 180:
+            if rotation == 180:
                 return (W - px) * scale, (H - py) * scale
-            if self.rotation == 270:
+            if rotation == 270:
                 return py * scale, (W - px) * scale
             return px * scale, py * scale
 
@@ -405,43 +457,6 @@ class PDFCanvas(Gtk.DrawingArea):
             writer.write(f)
         return True
 
-    def _get_layout(self):
-        if self._layout_cache is None:
-            try:
-                ok, rects = self.page.get_text_layout()
-                text = self.page.get_text()
-            except Exception:
-                ok, rects, text = False, None, ""
-            self._layout_cache = (ok, rects, text)
-        return self._layout_cache
-
-    @staticmethod
-    def _reconstruct_text(text, rects, x0, top, x1, bottom, tol=1.0):
-        groups = {}
-        for char, rect in zip(text, rects):
-            if char == "\n":
-                continue
-            center_x = (rect.x1 + rect.x2) / 2
-            center_y = (rect.y1 + rect.y2) / 2
-            if (
-                x0 - tol <= center_x <= x1 + tol
-                and top - tol <= center_y <= bottom + tol
-            ):
-                groups.setdefault(round(center_y), []).append((char, rect))
-
-        lines = []
-        for line in sorted(groups.values(), key=lambda chars: chars[0][1].y1):
-            chars = sorted(line, key=lambda item: item[1].x1)
-            output = ""
-            previous = None
-            for char, rect in chars:
-                if previous is not None and rect.x1 - previous.x2 > 2.0:
-                    output += " "
-                output += char
-                previous = rect
-            lines.append(output)
-        return "\n".join(lines).rstrip()
-
     def set_bbox(self, x0, top, x1, bottom):
         size = self.get_page_size()
         if size:
@@ -463,6 +478,8 @@ class PDFCanvas(Gtk.DrawingArea):
             ih = max(1, int(height * self.scale))
             surface = cairo.ImageSurface(cairo.Format.ARGB32, iw, ih)
             context = cairo.Context(surface)
+            context.set_source_rgb(1, 1, 1)
+            context.paint()
             context.scale(self.scale, self.scale)
             if self.rotation == 90:
                 context.translate(ph, 0)
@@ -477,6 +494,14 @@ class PDFCanvas(Gtk.DrawingArea):
             self._render_cache = surface
         return self._render_cache
 
+    def _theme_color(self, name, fallback):
+        """Resolve a CSS color defined in style.css, with an RGBA fallback."""
+        ctx = self.get_style_context()
+        found, color = ctx.lookup_color(name)
+        if found:
+            return color.red, color.green, color.blue, color.alpha
+        return fallback
+
     def on_draw(self, area, cr, width, height):
         if not self.page:
             return
@@ -485,6 +510,9 @@ class PDFCanvas(Gtk.DrawingArea):
         if surface is not None:
             cr.set_source_surface(surface, 0, 0)
             cr.paint()
+
+        fill = self._theme_color("pdfcropper-selection-fill", (0.9, 0.2, 0.2, 0.25))
+        stroke = self._theme_color("pdfcropper-selection-stroke", (0.9, 0.1, 0.1, 1.0))
 
         bbox = self.bbox
         if self.is_drawing:
@@ -497,15 +525,15 @@ class PDFCanvas(Gtk.DrawingArea):
             wx1, wy1 = self.page_to_widget(x1, bottom)
             rx0, ry0 = min(wx0, wx1), min(wy0, wy1)
             rx1, ry1 = max(wx0, wx1), max(wy0, wy1)
-            cr.set_source_rgba(0.9, 0.2, 0.2, 0.25)
+            cr.set_source_rgba(*fill)
             cr.rectangle(rx0, ry0, rx1 - rx0, ry1 - ry0)
             cr.fill_preserve()
-            cr.set_source_rgb(0.9, 0.1, 0.1)
+            cr.set_source_rgba(*stroke)
             cr.set_line_width(1.5)
             cr.stroke()
 
             handle = 6
-            cr.set_source_rgb(0.9, 0.1, 0.1)
+            cr.set_source_rgba(*stroke)
             for hx, hy in (
                 self.page_to_widget(x0, top),
                 self.page_to_widget(x1, top),

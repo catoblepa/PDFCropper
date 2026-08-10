@@ -1,10 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="io.github.catoblepa.PDFCropper" path="/io/github/catoblepa/PDFCropper/">
+  <schema id="io.github.catoblepa.PDFCropper" path="/io/github/catoblepa/PDFCropper/" gettext-domain="pdfcropper">
     <key name="sidebar-open" type="b">
       <default>false</default>
       <summary>Whether the side panel is open</summary>
       <description>Whether the side panel showing coordinates and OCR options is visible.</description>
+    </key>
+    <key name="window-width" type="i">
+      <default>1000</default>
+      <summary>Window width</summary>
+      <description>The width of the main window.</description>
+    </key>
+    <key name="window-height" type="i">
+      <default>700</default>
+      <summary>Window height</summary>
+      <description>The height of the main window.</description>
+    </key>
+    <key name="last-folder" type="s">
+      <default>''</default>
+      <summary>Last used folder</summary>
+      <description>The folder last used by the file chooser.</description>
+    </key>
+    <key name="ocr-language" type="s">
+      <default>'auto'</default>
+      <summary>OCR language</summary>
+      <description>The tesseract language selected for OCR. The special value 'auto' uses the system locale.</description>
+    </key>
+    <key name="crop-all-pages" type="b">
+      <default>true</default>
+      <summary>Whether to crop all pages</summary>
+      <description>Whether the cropped region is applied to all pages by default.</description>
     </key>
   </schema>
 </schemalist>

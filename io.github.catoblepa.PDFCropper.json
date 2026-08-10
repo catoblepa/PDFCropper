@@ -4,11 +4,11 @@
   "runtime-version": "50",
   "sdk": "org.gnome.Sdk",
   "command": "pdfcropper",
+  "separate-locales": false,
   "finish-args": [
     "--share=ipc",
     "--socket=fallback-x11",
     "--socket=wayland",
-    "--filesystem=host:ro",
     "--env=TESSDATA_PREFIX=/app/share/tessdata"
   ],
   "modules": [

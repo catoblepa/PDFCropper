@@ -4,7 +4,8 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango
+gi.require_version("Poppler", "0.18")
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango, Poppler
 from gettext import gettext as _
 from canvas import PDFCanvas
 from dialogs import show_help, show_shortcuts
@@ -45,7 +46,12 @@ class MainWindow(Adw.ApplicationWindow):
 
     def __init__(self, app):
         super().__init__(application=app, title=_("PDFCropper"))
-        self.set_default_size(1000, 700)
+
+        self.settings = Gio.Settings.new(app.props.application_id)
+
+        width = self.settings.get_int("window-width")
+        height = self.settings.get_int("window-height")
+        self.set_default_size(width, height)
 
         self.toast_overlay = Adw.ToastOverlay()
         self.set_content(self.toast_overlay)
@@ -68,26 +74,28 @@ class MainWindow(Adw.ApplicationWindow):
         self.window_title = Adw.WindowTitle(title=_("PDFCropper"))
         self.header_bar.set_title_widget(self.window_title)
 
+        self._setup_actions()
+
         btn_open = Gtk.Button(icon_name="document-open-symbolic")
         btn_open.set_tooltip_text(_("Open PDF"))
-        btn_open.connect("clicked", self.on_open_clicked)
+        btn_open.set_action_name("win.open")
         self.header_bar.pack_start(btn_open)
 
         self.btn_rotate_left = Gtk.Button(icon_name="object-rotate-left-symbolic")
         self.btn_rotate_left.set_tooltip_text(_("Rotate counterclockwise"))
-        self.btn_rotate_left.connect("clicked", self.on_rotate_left_clicked)
+        self.btn_rotate_left.set_action_name("win.rotate-left")
         self.btn_rotate_left.set_sensitive(False)
         self.header_bar.pack_start(self.btn_rotate_left)
 
         self.btn_rotate = Gtk.Button(icon_name="object-rotate-right-symbolic")
         self.btn_rotate.set_tooltip_text(_("Rotate clockwise"))
-        self.btn_rotate.connect("clicked", self.on_rotate_clicked)
+        self.btn_rotate.set_action_name("win.rotate")
         self.btn_rotate.set_sensitive(False)
         self.header_bar.pack_start(self.btn_rotate)
 
         self.btn_prev_page = Gtk.Button(icon_name="go-previous-symbolic")
         self.btn_prev_page.set_tooltip_text(_("Previous page"))
-        self.btn_prev_page.connect("clicked", self.on_prev_page_clicked)
+        self.btn_prev_page.set_action_name("win.prev-page")
         self.btn_prev_page.set_sensitive(False)
 
         self.lbl_page = Gtk.Label(label="")
@@ -96,13 +104,13 @@ class MainWindow(Adw.ApplicationWindow):
 
         self.btn_next_page = Gtk.Button(icon_name="go-next-symbolic")
         self.btn_next_page.set_tooltip_text(_("Next page"))
-        self.btn_next_page.connect("clicked", self.on_next_page_clicked)
+        self.btn_next_page.set_action_name("win.next-page")
         self.btn_next_page.set_sensitive(False)
 
         self.btn_save_crop = Gtk.Button(label=_("Save cropped PDF"))
         self.btn_save_crop.set_icon_name("crop-symbolic")
         self.btn_save_crop.set_tooltip_text(_("Save cropped PDF"))
-        self.btn_save_crop.connect("clicked", self.on_save_crop_clicked)
+        self.btn_save_crop.set_action_name("win.save-crop")
         self.btn_save_crop.set_sensitive(False)
         self.btn_save_crop.add_css_class("suggested-action")
         self.header_bar.pack_start(self.btn_save_crop)
@@ -116,9 +124,9 @@ class MainWindow(Adw.ApplicationWindow):
         self.btn_toggle_sidebar.connect("toggled", self.on_toggle_sidebar)
 
         # Sidebar toggle, page navigation, then menu (right side)
-        self.settings = Gio.Settings.new("io.github.catoblepa.PDFCropper")
-        sidebar_open = self.settings.get_boolean("sidebar-open")
-        self.btn_toggle_sidebar.set_active(sidebar_open)
+        self.settings.bind(
+            "sidebar-open", self.btn_toggle_sidebar, "active", Gio.SettingsBindFlags.DEFAULT
+        )
 
         # Sandwich menu
         self.menu_btn = Gtk.MenuButton()
@@ -155,7 +163,7 @@ class MainWindow(Adw.ApplicationWindow):
         btn_status_open.add_css_class("pill")
         btn_status_open.set_halign(Gtk.Align.CENTER)
         btn_status_open.set_valign(Gtk.Align.CENTER)
-        btn_status_open.connect("clicked", self.on_open_clicked)
+        btn_status_open.set_action_name("win.open")
         self.status_page.set_child(btn_status_open)
         self.stack.add_named(self.status_page, "empty")
 
@@ -199,7 +207,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.btn_fit_width.add_css_class("circular")
         self.btn_fit_width.add_css_class("card")
         self.btn_fit_width.set_tooltip_text(_("Fit width"))
-        self.btn_fit_width.connect("clicked", self.on_fit_width_clicked)
+        self.btn_fit_width.set_action_name("win.fit-width")
         self.btn_fit_width.set_sensitive(False)
         zoom_toolbar.append(self.btn_fit_width)
 
@@ -207,7 +215,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.btn_zoom_in.add_css_class("circular")
         self.btn_zoom_in.add_css_class("card")
         self.btn_zoom_in.set_tooltip_text(_("Zoom in"))
-        self.btn_zoom_in.connect("clicked", self.on_zoom_in_clicked)
+        self.btn_zoom_in.set_action_name("win.zoom-in")
         self.btn_zoom_in.set_sensitive(False)
         zoom_toolbar.append(self.btn_zoom_in)
 
@@ -215,7 +223,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.btn_zoom_out.add_css_class("circular")
         self.btn_zoom_out.add_css_class("card")
         self.btn_zoom_out.set_tooltip_text(_("Zoom out"))
-        self.btn_zoom_out.connect("clicked", self.on_zoom_out_clicked)
+        self.btn_zoom_out.set_action_name("win.zoom-out")
         self.btn_zoom_out.set_sensitive(False)
         zoom_toolbar.append(self.btn_zoom_out)
 
@@ -230,43 +238,36 @@ class MainWindow(Adw.ApplicationWindow):
         self.paned.set_end_child(self.side_revealer)
 
         side_scroll = Gtk.ScrolledWindow()
-        side_scroll.set_min_content_width(320)
+        side_scroll.set_min_content_width(300)
         side_scroll.set_max_content_width(360)
         side_scroll.add_css_class("side-panel")
         self.side_revealer.set_child(side_scroll)
 
-        self.side_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        self.side_box.set_margin_start(7)
-        self.side_box.set_margin_end(7)
-        self.side_box.set_margin_top(12)
-        self.side_box.set_margin_bottom(12)
-        self.side_box.set_hexpand(False)
-        side_scroll.set_child(self.side_box)
+        self.side_page = Adw.PreferencesPage()
+        side_scroll.set_child(self.side_page)
 
-        # Coordinates card
-        coord_card = Gtk.Frame()
-        coord_card.add_css_class("card")
-        coord_card.set_hexpand(True)
+        # Coordinates fields group
+        coord_group = Adw.PreferencesGroup()
+        coord_header_row = Adw.PreferencesRow()
+        coord_header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        coord_header_box.add_css_class("side-header-box")
+        coord_title = Gtk.Label(label=_("Coordinate fields"), xalign=0)
+        coord_title.add_css_class("heading")
+        coord_title.set_hexpand(True)
+        coord_header_box.append(coord_title)
+        coord_header_row.set_child(coord_header_box)
+        coord_group.add(coord_header_row)
 
-        coord_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        coord_box.set_margin_start(14)
-        coord_box.set_margin_end(14)
-        coord_box.set_margin_top(12)
-        coord_box.set_margin_bottom(12)
-        coord_card.set_child(coord_box)
-        self.side_box.append(coord_card)
-
-        coord_header = Gtk.Label(label=_("Coordinate fields"))
-        coord_header.set_halign(Gtk.Align.START)
-        coord_header.add_css_class("heading")
-        coord_box.append(coord_header)
-
+        coord_row = Adw.PreferencesRow()
         coord_grid = Gtk.Grid()
         coord_grid.set_column_spacing(6)
         coord_grid.set_row_spacing(6)
         coord_grid.set_halign(Gtk.Align.FILL)
         coord_grid.set_hexpand(True)
-        coord_box.append(coord_grid)
+        coord_grid.add_css_class("side-content-box")
+        coord_row.set_child(coord_grid)
+        coord_group.add(coord_row)
+        self.side_page.add(coord_group)
 
         self.coord_spins = {}
         self.lock_buttons = {}
@@ -302,54 +303,52 @@ class MainWindow(Adw.ApplicationWindow):
             self.lock_buttons[key] = lock_btn
 
             if key == "width":
-                lbl.set_margin_top(15)
-                spin.set_margin_top(15)
-                lock_btn.set_margin_top(15)
+                lbl.add_css_class("coord-sep")
+                spin.add_css_class("coord-sep")
+                lock_btn.add_css_class("coord-sep")
 
             coord_grid.attach(lbl, 0, row, 1, 1)
             coord_grid.attach(spin, 1, row, 1, 1)
             coord_grid.attach(lock_btn, 2, row, 1, 1)
 
-        # Extracted text card
-        text_card = Gtk.Frame()
-        text_card.add_css_class("card")
-        text_card.set_hexpand(True)
-
-        text_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        text_box.set_margin_start(14)
-        text_box.set_margin_end(14)
-        text_box.set_margin_top(6)
-        text_box.set_margin_bottom(12)
-        text_card.set_child(text_box)
-
-        text_header_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        text_header_row.set_hexpand(True)
-
-        text_header = Gtk.Label(label=_("Extracted text"))
-        text_header.set_halign(Gtk.Align.START)
-        text_header.set_hexpand(True)
-        text_header.add_css_class("heading")
-        text_header_row.append(text_header)
+        # Extracted text group
+        text_group = Adw.PreferencesGroup()
+        text_header_row = Adw.PreferencesRow()
+        text_header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        text_header_box.add_css_class("side-header-box")
+        text_title = Gtk.Label(label=_("Extracted text"), xalign=0)
+        text_title.add_css_class("heading")
+        text_title.set_hexpand(True)
+        text_header_box.append(text_title)
 
         self.lbl_text_source = Gtk.Label(label="")
         self.lbl_text_source.set_visible(False)
         self.lbl_text_source.set_valign(Gtk.Align.CENTER)
         self.lbl_text_source.add_css_class("badge")
-        text_header_row.append(self.lbl_text_source)
+        text_header_box.append(self.lbl_text_source)
 
         btn_copy_text = Gtk.Button(icon_name="edit-copy-symbolic")
         btn_copy_text.set_tooltip_text(_("Copy extracted text"))
         btn_copy_text.add_css_class("flat")
-        btn_copy_text.set_halign(Gtk.Align.END)
         btn_copy_text.set_valign(Gtk.Align.CENTER)
-        btn_copy_text.connect("clicked", self.on_copy_text_clicked)
-        text_header_row.append(btn_copy_text)
+        btn_copy_text.set_action_name("win.copy-text")
+        text_header_box.append(btn_copy_text)
 
-        text_box.append(text_header_row)
+        text_header_row.set_child(text_header_box)
+        text_group.add(text_header_row)
+
+        text_row = Adw.PreferencesRow()
+        text_row.set_vexpand(True)
+        text_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        text_box.add_css_class("side-content-box")
+        text_box.set_vexpand(True)
+        text_row.set_child(text_box)
+        text_group.add(text_row)
+        text_group.set_vexpand(True)
+        self.side_page.add(text_group)
 
         self.text_scroll = Gtk.ScrolledWindow()
         self.text_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        self.text_scroll.set_max_content_height(400)
         self.text_scroll.set_vexpand(True)
         self.text_scroll.set_hexpand(True)
 
@@ -361,44 +360,38 @@ class MainWindow(Adw.ApplicationWindow):
         self.lbl_info.set_xalign(0)
         self.lbl_info.set_selectable(True)
         self.lbl_info.set_halign(Gtk.Align.FILL)
-        self.lbl_info.set_valign(Gtk.Align.START)
+        self.lbl_info.set_valign(Gtk.Align.FILL)
         self.text_scroll.set_child(self.lbl_info)
         text_box.append(self.text_scroll)
 
-        self.side_box.append(text_card)
-
-        # Coordinates display card
-        coord_display_card = Gtk.Frame()
-        coord_display_card.add_css_class("card")
-        coord_display_card.set_hexpand(True)
-
-        coord_display_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        coord_display_box.set_margin_start(14)
-        coord_display_box.set_margin_end(14)
-        coord_display_box.set_margin_top(6)
-        coord_display_box.set_margin_bottom(12)
-        coord_display_card.set_child(coord_display_box)
-
-        coord_display_header_row = Gtk.Box(
+        # Coordinates display group
+        coord_display_group = Adw.PreferencesGroup()
+        coord_display_header_row = Adw.PreferencesRow()
+        coord_display_header_box = Gtk.Box(
             orientation=Gtk.Orientation.HORIZONTAL, spacing=6
         )
-        coord_display_header_row.set_hexpand(True)
-
-        coord_display_header = Gtk.Label(label=_("Coordinates"))
-        coord_display_header.set_halign(Gtk.Align.START)
-        coord_display_header.set_hexpand(True)
-        coord_display_header.add_css_class("heading")
-        coord_display_header_row.append(coord_display_header)
+        coord_display_header_box.add_css_class("side-header-box")
+        coord_display_title = Gtk.Label(label=_("Coordinates"), xalign=0)
+        coord_display_title.add_css_class("heading")
+        coord_display_title.set_hexpand(True)
+        coord_display_header_box.append(coord_display_title)
 
         btn_copy_coords = Gtk.Button(icon_name="edit-copy-symbolic")
         btn_copy_coords.set_tooltip_text(_("Copy coordinates"))
         btn_copy_coords.add_css_class("flat")
-        btn_copy_coords.set_halign(Gtk.Align.END)
         btn_copy_coords.set_valign(Gtk.Align.CENTER)
-        btn_copy_coords.connect("clicked", self.on_copy_coords_clicked)
-        coord_display_header_row.append(btn_copy_coords)
+        btn_copy_coords.set_action_name("win.copy-coords")
+        coord_display_header_box.append(btn_copy_coords)
 
-        coord_display_box.append(coord_display_header_row)
+        coord_display_header_row.set_child(coord_display_header_box)
+        coord_display_group.add(coord_display_header_row)
+
+        coord_display_row = Adw.PreferencesRow()
+        coord_display_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        coord_display_box.add_css_class("side-content-box")
+        coord_display_row.set_child(coord_display_box)
+        coord_display_group.add(coord_display_row)
+        self.side_page.add(coord_display_group)
 
         self.lbl_coords = Gtk.Label(label="")
         self.lbl_coords.set_xalign(0)
@@ -406,29 +399,28 @@ class MainWindow(Adw.ApplicationWindow):
         self.lbl_coords.set_halign(Gtk.Align.FILL)
         coord_display_box.append(self.lbl_coords)
 
-        self.side_box.append(coord_display_card)
+        # OCR group
+        ocr_group = Adw.PreferencesGroup()
+        ocr_header_row = Adw.PreferencesRow()
+        ocr_header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        ocr_header_box.add_css_class("side-header-box")
+        ocr_title = Gtk.Label(label=_("OCR"), xalign=0)
+        ocr_title.add_css_class("heading")
+        ocr_title.set_hexpand(True)
+        ocr_header_box.append(ocr_title)
+        ocr_header_row.set_child(ocr_header_box)
+        ocr_group.add(ocr_header_row)
 
-        # OCR card
-        ocr_card = Gtk.Frame()
-        ocr_card.add_css_class("card")
-        ocr_card.set_hexpand(True)
+        ocr_row = Adw.PreferencesRow()
+        ocr_row_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        ocr_row_box.add_css_class("side-content-box")
+        ocr_row.set_child(ocr_row_box)
+        ocr_group.add(ocr_row)
+        self.side_page.add(ocr_group)
 
-        ocr_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        ocr_box.set_margin_start(14)
-        ocr_box.set_margin_end(14)
-        ocr_box.set_margin_top(12)
-        ocr_box.set_margin_bottom(12)
-        ocr_card.set_child(ocr_box)
-
-        ocr_header = Gtk.Label(label=_("OCR"))
-        ocr_header.set_halign(Gtk.Align.START)
-        ocr_header.add_css_class("heading")
-        ocr_box.append(ocr_header)
-
-        ocr_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         ocr_lbl = Gtk.Label(label=_("Language:"))
         ocr_lbl.set_halign(Gtk.Align.START)
-        ocr_row.append(ocr_lbl)
+        ocr_row_box.append(ocr_lbl)
 
         self.ocr_langs = self._load_ocr_languages()
         self.ocr_model = Gtk.StringList()
@@ -439,107 +431,51 @@ class MainWindow(Adw.ApplicationWindow):
         self.ocr_dropdown.set_hexpand(True)
         self.ocr_dropdown.set_sensitive(bool(self.ocr_langs))
         self._select_ocr_language()
-        ocr_row.append(self.ocr_dropdown)
-        ocr_box.append(ocr_row)
-
-        self.side_box.append(ocr_card)
+        ocr_row_box.append(self.ocr_dropdown)
 
         # Drag & Drop Target
         drop_target = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
         drop_target.connect("drop", self.on_file_dropped)
         self.add_controller(drop_target)
 
-        # Keyboard shortcuts (HIG: Ctrl+O, Ctrl++, Ctrl+-, Ctrl+0)
-        shortcuts = Gtk.ShortcutController()
-        shortcuts.set_scope(Gtk.ShortcutScope.GLOBAL)
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("<Ctrl>o"),
-                Gtk.CallbackAction.new(self._on_open_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("<Ctrl>w"),
-                Gtk.CallbackAction.new(self._on_close_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("<Ctrl>q"),
-                Gtk.CallbackAction.new(self._on_close_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("F1"),
-                Gtk.CallbackAction.new(self._on_help_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("<Ctrl>question"),
-                Gtk.CallbackAction.new(self._on_shortcuts_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("<Ctrl>plus"),
-                Gtk.CallbackAction.new(self._on_zoom_in_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("<Ctrl>minus"),
-                Gtk.CallbackAction.new(self._on_zoom_out_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("<Ctrl>0"),
-                Gtk.CallbackAction.new(self._on_fit_width_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("F9"),
-                Gtk.CallbackAction.new(self._on_toggle_sidebar_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("Page_Down"),
-                Gtk.CallbackAction.new(self._on_next_page_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("Page_Up"),
-                Gtk.CallbackAction.new(self._on_prev_page_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("<Ctrl>Right"),
-                Gtk.CallbackAction.new(self._on_rotate_shortcut),
-            )
-        )
-        shortcuts.add_shortcut(
-            Gtk.Shortcut.new(
-                Gtk.ShortcutTrigger.parse_string("<Ctrl>Left"),
-                Gtk.CallbackAction.new(self._on_rotate_left_shortcut),
-            )
-        )
-        self.add_controller(shortcuts)
-
         self._updating_spins = False
         self._extracted_text = ""
         self._current_coords = ""
         self._fit_width_pending = None
         self._spin_to_key = {s: k for k, s in self.coord_spins.items()}
-        self._crop_all_pages = True
+        self._crop_all_pages = self.settings.get_boolean("crop-all-pages")
 
         self.connect("map", self._on_map)
+        self.connect("close-request", self._on_close_request)
+
+    def _on_close_request(self, widget):
+        self.settings.set_int("window-width", self.get_width())
+        self.settings.set_int("window-height", self.get_height())
+        return False
+
+    def _setup_actions(self):
+        actions = [
+            ("open", self.on_open_activated),
+            ("rotate", self.on_rotate_activated),
+            ("rotate-left", self.on_rotate_left_activated),
+            ("prev-page", self.on_prev_page_activated),
+            ("next-page", self.on_next_page_activated),
+            ("save-crop", self.on_save_crop_activated),
+            ("fit-width", self.on_fit_width_activated),
+            ("zoom-in", self.on_zoom_in_activated),
+            ("zoom-out", self.on_zoom_out_activated),
+            ("toggle-sidebar", self.on_toggle_sidebar_activated),
+            ("copy-text", self.on_copy_text_activated),
+            ("copy-coords", self.on_copy_coords_activated),
+            ("close", self.on_close_activated),
+        ]
+        for name, callback in actions:
+            action = Gio.SimpleAction.new(name, None)
+            action.connect("activate", callback)
+            self.add_action(action)
+
+    def on_close_activated(self, action, param):
+        self.close()
 
     def _build_menu_model(self):
         menu = Gio.Menu()
@@ -571,7 +507,12 @@ class MainWindow(Adw.ApplicationWindow):
         return langs
 
     def _select_ocr_language(self):
-        """Select the language matching the system locale, if installed."""
+        """Select the saved language, falling back to the system locale."""
+        saved = self.settings.get_string("ocr-language")
+        for i, (lang_code, _name) in enumerate(self.ocr_langs):
+            if lang_code == saved:
+                self.ocr_dropdown.set_selected(i)
+                return
         import locale
 
         raw = locale.getlocale()[0]
@@ -589,25 +530,34 @@ class MainWindow(Adw.ApplicationWindow):
     def _selected_ocr_code(self):
         idx = self.ocr_dropdown.get_selected()
         if 0 <= idx < len(self.ocr_langs):
-            return self.ocr_langs[idx][0]
+            code = self.ocr_langs[idx][0]
+            self.settings.set_string("ocr-language", code)
+            return code
         return _OCR_AUTO
 
-    def _ocr_text(self, x0, top, x1, bottom):
+    def _ocr_text(self, x0, top, x1, bottom, file_path, page_idx, rotation):
         if not PDFCanvas.tesseract_available():
             return ""
-        page = self.canvas.page
+        try:
+            doc = Poppler.Document.new_from_file(
+                GLib.filename_to_uri(file_path, None), None
+            )
+        except Exception:
+            return ""
         scale = self.canvas.scale
         lang = self._selected_ocr_code()
         if lang == _OCR_AUTO:
             for code in PDFCanvas.get_ocr_languages():
                 text = self.canvas.ocr_region(
-                    x0, top, x1, bottom, code, page=page, scale=scale
+                    x0, top, x1, bottom, code,
+                    doc=doc, page_idx=page_idx, rotation=rotation, scale=scale,
                 )
                 if text:
                     return text
             return ""
         return self.canvas.ocr_region(
-            x0, top, x1, bottom, lang, page=page, scale=scale
+            x0, top, x1, bottom, lang,
+            doc=doc, page_idx=page_idx, rotation=rotation, scale=scale,
         )
 
     def on_shortcuts_activated(self, action, param):
@@ -639,30 +589,36 @@ class MainWindow(Adw.ApplicationWindow):
             "channel-secure-symbolic" if btn.get_active() else "channel-insecure-symbolic"
         )
 
-    def on_open_clicked(self, btn):
+    def _file_dialog_with_last_folder(self, dialog):
+        last = self.settings.get_string("last-folder")
+        if last and os.path.isdir(last):
+            dialog.set_initial_folder(Gio.File.new_for_path(last))
+
+    def _remember_folder(self, path):
+        if path:
+            folder = os.path.dirname(path)
+            if folder:
+                self.settings.set_string("last-folder", folder)
+
+    def _pdf_filter(self):
+        file_filter = Gtk.FileFilter()
+        file_filter.set_name(_("PDF documents"))
+        file_filter.add_mime_type("application/pdf")
+        return file_filter
+
+    def on_open_activated(self, action, param):
         dialog = Gtk.FileDialog()
+        self._file_dialog_with_last_folder(dialog)
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(self._pdf_filter())
+        dialog.set_filters(filters)
         dialog.open(self, None, self.on_file_dialog_finish)
-
-    def _on_open_shortcut(self, *args):
-        self.on_open_clicked(None)
-        return True
-
-    def _on_close_shortcut(self, *args):
-        self.close()
-        return True
-
-    def _on_help_shortcut(self, *args):
-        self.on_help_activated(None, None)
-        return True
-
-    def _on_shortcuts_shortcut(self, *args):
-        self.on_shortcuts_activated(None, None)
-        return True
 
     def on_file_dialog_finish(self, dialog, result):
         try:
             file = dialog.open_finish(result)
             if file:
+                self._remember_folder(file.get_path())
                 self.load_pdf_file(file.get_path())
         except Exception:
             pass
@@ -684,7 +640,7 @@ class MainWindow(Adw.ApplicationWindow):
             self.toast_overlay.add_toast(toast)
             return
         self.stack.set_visible_child_name("content")
-        filename = path.split("/")[-1]
+        filename = os.path.basename(path)
         self.window_title.set_title(f"{filename} - {_('PDFCropper')}")
         self.btn_fit_width.set_sensitive(True)
         self.btn_rotate.set_sensitive(True)
@@ -718,31 +674,43 @@ class MainWindow(Adw.ApplicationWindow):
         self.btn_zoom_in.set_sensitive(self.canvas.page is not None and scale < 3.0)
         self.btn_zoom_out.set_sensitive(self.canvas.page is not None and scale > 0.5)
 
-    def on_zoom_in_clicked(self, btn):
+    def on_zoom_in_activated(self, action, param):
         if self.canvas.page is not None:
             self.canvas.zoom_about_center(1.1)
 
-    def on_zoom_out_clicked(self, btn):
+    def on_zoom_out_activated(self, action, param):
         if self.canvas.page is not None:
             self.canvas.zoom_about_center(1.0 / 1.1)
 
-    def on_fit_width_clicked(self, btn):
+    def on_fit_width_activated(self, action, param):
         if self.canvas.page is not None:
             self.canvas.fit_to_width()
 
-    def on_rotate_clicked(self, btn):
+    def on_rotate_activated(self, action, param):
         if self.canvas.page is not None:
             self.canvas.rotate(90)
+            self._reapply_bbox()
 
-    def on_rotate_left_clicked(self, btn):
+    def on_rotate_left_activated(self, action, param):
         if self.canvas.page is not None:
             self.canvas.rotate(-90)
+            self._reapply_bbox()
 
-    def on_prev_page_clicked(self, btn):
+    def _reapply_bbox(self):
+        if self.canvas.bbox is not None:
+            x0, top, x1, bottom = self.canvas.bbox
+            self._apply_bbox(x0, top, x1, bottom)
+
+    def on_prev_page_activated(self, action, param):
         self.canvas.go_to_page(self.canvas.get_current_page() - 1)
 
-    def on_next_page_clicked(self, btn):
+    def on_next_page_activated(self, action, param):
         self.canvas.go_to_page(self.canvas.get_current_page() + 1)
+
+    def on_toggle_sidebar_activated(self, action, param):
+        self.btn_toggle_sidebar.set_active(
+            not self.btn_toggle_sidebar.get_active()
+        )
 
     def on_page_changed(self, idx, count):
         self.lbl_page.set_text(f"{idx + 1} / {count}")
@@ -754,8 +722,6 @@ class MainWindow(Adw.ApplicationWindow):
             self._set_text_source(None)
 
     def on_toggle_sidebar(self, btn):
-        if hasattr(self, "settings"):
-            self.settings.set_boolean("sidebar-open", btn.get_active())
         if not hasattr(self, "side_revealer"):
             return
         visible = btn.get_active()
@@ -775,7 +741,7 @@ class MainWindow(Adw.ApplicationWindow):
     def _on_map(self, widget):
         GLib.idle_add(self._apply_panel_position)
 
-    def on_save_crop_clicked(self, btn):
+    def on_save_crop_activated(self, action, param):
         if self.canvas.bbox is None:
             return
         if self.canvas.get_page_count() > 1:
@@ -804,6 +770,7 @@ class MainWindow(Adw.ApplicationWindow):
             self._crop_all_pages = False
         else:
             return
+        self.settings.set_boolean("crop-all-pages", self._crop_all_pages)
         self._open_save_crop_dialog()
 
     def _open_save_crop_dialog(self):
@@ -812,11 +779,9 @@ class MainWindow(Adw.ApplicationWindow):
         dialog = Gtk.FileDialog()
         dialog.set_title(_("Save cropped PDF"))
         dialog.set_initial_name(self._suggested_crop_name())
-        file_filter = Gtk.FileFilter()
-        file_filter.set_name(_("PDF documents"))
-        file_filter.add_mime_type("application/pdf")
+        self._file_dialog_with_last_folder(dialog)
         filters = Gio.ListStore.new(Gtk.FileFilter)
-        filters.append(file_filter)
+        filters.append(self._pdf_filter())
         dialog.set_filters(filters)
         dialog.save(self, None, self.on_save_crop_finish)
 
@@ -836,6 +801,7 @@ class MainWindow(Adw.ApplicationWindow):
             path = file.get_path()
             if not path:
                 return
+            self._remember_folder(path)
             x0, top, x1, bottom = self.canvas.bbox
             all_pages = getattr(self, "_crop_all_pages", True)
             if self.canvas.save_cropped_pdf(
@@ -849,7 +815,9 @@ class MainWindow(Adw.ApplicationWindow):
                 toast.set_timeout(3)
                 self.toast_overlay.add_toast(toast)
         except Exception:
-            pass
+            toast = Adw.Toast.new(_("Unable to save cropped PDF"))
+            toast.set_timeout(3)
+            self.toast_overlay.add_toast(toast)
 
     def on_pan_begin(self, gesture, x, y):
         self.pan_hadj = self.document_scroll.get_hadjustment()
@@ -866,44 +834,6 @@ class MainWindow(Adw.ApplicationWindow):
 
     def on_pan_end(self, gesture, x, y):
         self.document_scroll.set_cursor_from_name("default")
-
-    def _on_zoom_in_shortcut(self, *args):
-        self.on_zoom_in_clicked(None)
-        return True
-
-    def _on_zoom_out_shortcut(self, *args):
-        self.on_zoom_out_clicked(None)
-        return True
-
-    def _on_fit_width_shortcut(self, *args):
-        self.on_fit_width_clicked(None)
-        return True
-
-    def _on_toggle_sidebar_shortcut(self, *args):
-        self.btn_toggle_sidebar.set_active(
-            not self.btn_toggle_sidebar.get_active()
-        )
-        return True
-
-    def _on_prev_page_shortcut(self, *args):
-        if self.canvas.page is not None:
-            self.on_prev_page_clicked(None)
-        return True
-
-    def _on_next_page_shortcut(self, *args):
-        if self.canvas.page is not None:
-            self.on_next_page_clicked(None)
-        return True
-
-    def _on_rotate_shortcut(self, *args):
-        if self.canvas.page is not None:
-            self.on_rotate_clicked(None)
-        return True
-
-    def _on_rotate_left_shortcut(self, *args):
-        if self.canvas.page is not None:
-            self.on_rotate_left_clicked(None)
-        return True
 
     @staticmethod
     def _solve_axis(values, changed, locks):
@@ -1024,10 +954,16 @@ class MainWindow(Adw.ApplicationWindow):
         if getattr(self, "_ocr_busy", False):
             return
         page_idx = self.canvas.get_current_page()
+        file_path = getattr(self.canvas, "_file_path", None)
+        if not file_path:
+            return
+        rotation = self.canvas.rotation
         self._ocr_busy = True
 
         def work():
-            ocr_text = self._ocr_text(x0, top, x1, bottom)
+            ocr_text = self._ocr_text(
+                x0, top, x1, bottom, file_path, page_idx, rotation
+            )
             GLib.idle_add(self._ocr_done, page_idx, x0, top, x1, bottom, ocr_text)
 
         import threading
@@ -1056,7 +992,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.lbl_info.set_text(preview)
         self._set_text_source(source)
 
-    def on_copy_text_clicked(self, btn):
+    def on_copy_text_activated(self, action, param):
         if self._extracted_text.strip():
             clipboard = self.get_clipboard()
             clipboard.set(self._extracted_text)
@@ -1064,7 +1000,7 @@ class MainWindow(Adw.ApplicationWindow):
             toast.set_timeout(2)
             self.toast_overlay.add_toast(toast)
 
-    def on_copy_coords_clicked(self, btn):
+    def on_copy_coords_activated(self, action, param):
         if self._current_coords:
             clipboard = self.get_clipboard()
             clipboard.set(self._current_coords)

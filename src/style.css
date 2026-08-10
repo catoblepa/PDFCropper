@@ -1,3 +1,10 @@
+@define-color pdfcropper-selection-fill alpha(red, 0.25);
+@define-color pdfcropper-selection-stroke #e50914;
+
+.pdfcanvas {
+    background-color: white;
+}
+
 .zoom-overlay {
     background-color: transparent;
     border-radius: 9999px;
@@ -5,22 +12,38 @@
 }
 
 .zoom-overlay button.circular {
-    background-color: rgba(60, 60, 60, 0.85);
-    color: white;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    background-color: color-mix(
+        in srgb,
+        var(--window-bg-color) 85%,
+        var(--window-fg-color) 15%
+    );
+    color: var(--window-fg-color);
+    box-shadow: 0 1px 3px alpha(var(--window-fg-color), 0.25);
 }
 
 .zoom-overlay button.circular:hover {
-    background-color: rgba(80, 80, 80, 0.9);
+    background-color: color-mix(
+        in srgb,
+        var(--window-bg-color) 75%,
+        var(--window-fg-color) 25%
+    );
 }
 
 .zoom-overlay button.circular:active {
-    background-color: rgba(40, 40, 40, 0.9);
+    background-color: color-mix(
+        in srgb,
+        var(--window-bg-color) 65%,
+        var(--window-fg-color) 35%
+    );
 }
 
 .zoom-overlay button.circular:disabled {
-    background-color: rgba(60, 60, 60, 0.35);
-    color: alpha(white, 0.5);
+    background-color: color-mix(
+        in srgb,
+        var(--window-bg-color) 88%,
+        var(--window-fg-color) 12%
+    );
+    color: alpha(var(--window-fg-color), 0.45);
 }
 
 .sidebar-toggle {
@@ -28,7 +51,7 @@
     box-shadow: none;
 }
 .sidebar-toggle:checked {
-    background-color: rgba(128, 128, 128, 0.25);
+    background-color: alpha(var(--window-fg-color), 0.12);
 }
 
 .side-panel {
@@ -37,6 +60,23 @@
         var(--window-bg-color) 96%,
         var(--window-fg-color) 4%
     );
+}
+
+.side-panel preferencespage > scrolledwindow > viewport > clamp > box {
+    margin: 12px 8px;
+    border-spacing: 10px;
+}
+
+.side-header-box {
+    margin: 4px 12px;
+}
+
+.side-content-box {
+    margin: 4px 12px;
+}
+
+.coord-sep {
+    margin-top: 12px;
 }
 
 .ocr-badge {
