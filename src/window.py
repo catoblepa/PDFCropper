@@ -4,11 +4,13 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-gi.require_version("Poppler", "0.18")
-from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango, Poppler
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 from gettext import gettext as _
 from canvas import PDFCanvas
 from dialogs import show_help, show_shortcuts
+from ocr import OCRController
+from panels import SidePanel
+from version import APP_VERSION
 
 _OCR_AUTO = "__auto__"
 
@@ -243,195 +245,19 @@ class MainWindow(Adw.ApplicationWindow):
         side_scroll.add_css_class("side-panel")
         self.side_revealer.set_child(side_scroll)
 
-        self.side_page = Adw.PreferencesPage()
-        side_scroll.set_child(self.side_page)
+        self.side_panel = SidePanel(self.on_coord_changed, self.on_lock_toggled)
+        side_scroll.set_child(self.side_panel)
+        self.coord_spins = self.side_panel.coord_spins
+        self.lock_buttons = self.side_panel.lock_buttons
+        self.locks = self.side_panel.locks
+        self.lbl_text_source = self.side_panel.lbl_text_source
+        self.lbl_info = self.side_panel.lbl_info
+        self.lbl_coords = self.side_panel.lbl_coords
+        self.ocr_dropdown = self.side_panel.ocr_dropdown
+        self.ocr_model = self.side_panel.ocr_model
 
-        # Coordinates fields group
-        coord_group = Adw.PreferencesGroup()
-        coord_header_row = Adw.PreferencesRow()
-        coord_header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        coord_header_box.add_css_class("side-header-box")
-        coord_title = Gtk.Label(label=_("Coordinate fields"), xalign=0)
-        coord_title.add_css_class("heading")
-        coord_title.set_hexpand(True)
-        coord_header_box.append(coord_title)
-        coord_header_row.set_child(coord_header_box)
-        coord_group.add(coord_header_row)
-
-        coord_row = Adw.PreferencesRow()
-        coord_grid = Gtk.Grid()
-        coord_grid.set_column_spacing(6)
-        coord_grid.set_row_spacing(6)
-        coord_grid.set_halign(Gtk.Align.FILL)
-        coord_grid.set_hexpand(True)
-        coord_grid.add_css_class("side-content-box")
-        coord_row.set_child(coord_grid)
-        coord_group.add(coord_row)
-        self.side_page.add(coord_group)
-
-        self.coord_spins = {}
-        self.lock_buttons = {}
-        self.locks = {k: False for k in self._KEYS}
-        for row, (key, label) in enumerate(
-            [
-                ("x0", _("left")),
-                ("top", _("top")),
-                ("x1", _("right")),
-                ("bottom", _("bottom")),
-                ("width", _("width")),
-                ("height", _("height")),
-            ]
-        ):
-            lbl = Gtk.Label(label=f"{label}:")
-            lbl.set_halign(Gtk.Align.START)
-            spin = Gtk.SpinButton()
-            spin.set_range(0, 10000)
-            spin.set_increments(1, 10)
-            spin.set_digits(0)
-            spin.set_value(0)
-            spin.set_width_chars(5)
-            spin.connect("value-changed", self.on_coord_changed)
-            self.coord_spins[key] = spin
-
-            lock_btn = Gtk.ToggleButton()
-            lock_btn.set_icon_name("channel-insecure-symbolic")
-            lock_btn.set_tooltip_text(_("Lock this coordinate"))
-            lock_btn.add_css_class("flat")
-            lock_btn.add_css_class("circular")
-            lock_btn.set_valign(Gtk.Align.CENTER)
-            lock_btn.connect("toggled", self.on_lock_toggled, key)
-            self.lock_buttons[key] = lock_btn
-
-            if key == "width":
-                lbl.add_css_class("coord-sep")
-                spin.add_css_class("coord-sep")
-                lock_btn.add_css_class("coord-sep")
-
-            coord_grid.attach(lbl, 0, row, 1, 1)
-            coord_grid.attach(spin, 1, row, 1, 1)
-            coord_grid.attach(lock_btn, 2, row, 1, 1)
-
-        # Extracted text group
-        text_group = Adw.PreferencesGroup()
-        text_header_row = Adw.PreferencesRow()
-        text_header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        text_header_box.add_css_class("side-header-box")
-        text_title = Gtk.Label(label=_("Extracted text"), xalign=0)
-        text_title.add_css_class("heading")
-        text_title.set_hexpand(True)
-        text_header_box.append(text_title)
-
-        self.lbl_text_source = Gtk.Label(label="")
-        self.lbl_text_source.set_visible(False)
-        self.lbl_text_source.set_valign(Gtk.Align.CENTER)
-        self.lbl_text_source.add_css_class("badge")
-        text_header_box.append(self.lbl_text_source)
-
-        btn_copy_text = Gtk.Button(icon_name="edit-copy-symbolic")
-        btn_copy_text.set_tooltip_text(_("Copy extracted text"))
-        btn_copy_text.add_css_class("flat")
-        btn_copy_text.set_valign(Gtk.Align.CENTER)
-        btn_copy_text.set_action_name("win.copy-text")
-        text_header_box.append(btn_copy_text)
-
-        text_header_row.set_child(text_header_box)
-        text_group.add(text_header_row)
-
-        text_row = Adw.PreferencesRow()
-        text_row.set_vexpand(True)
-        text_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        text_box.add_css_class("side-content-box")
-        text_box.set_vexpand(True)
-        text_row.set_child(text_box)
-        text_group.add(text_row)
-        text_group.set_vexpand(True)
-        self.side_page.add(text_group)
-
-        self.text_scroll = Gtk.ScrolledWindow()
-        self.text_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        self.text_scroll.set_vexpand(True)
-        self.text_scroll.set_hexpand(True)
-
-        self.lbl_info = Gtk.Label(
-            label=_("Drag a box over the PDF to copy bounding box coordinates")
-        )
-        self.lbl_info.set_wrap(True)
-        self.lbl_info.set_wrap_mode(Pango.WrapMode.CHAR)
-        self.lbl_info.set_xalign(0)
-        self.lbl_info.set_selectable(True)
-        self.lbl_info.set_halign(Gtk.Align.FILL)
-        self.lbl_info.set_valign(Gtk.Align.FILL)
-        self.text_scroll.set_child(self.lbl_info)
-        text_box.append(self.text_scroll)
-
-        # Coordinates display group
-        coord_display_group = Adw.PreferencesGroup()
-        coord_display_header_row = Adw.PreferencesRow()
-        coord_display_header_box = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=6
-        )
-        coord_display_header_box.add_css_class("side-header-box")
-        coord_display_title = Gtk.Label(label=_("Coordinates"), xalign=0)
-        coord_display_title.add_css_class("heading")
-        coord_display_title.set_hexpand(True)
-        coord_display_header_box.append(coord_display_title)
-
-        btn_copy_coords = Gtk.Button(icon_name="edit-copy-symbolic")
-        btn_copy_coords.set_tooltip_text(_("Copy coordinates"))
-        btn_copy_coords.add_css_class("flat")
-        btn_copy_coords.set_valign(Gtk.Align.CENTER)
-        btn_copy_coords.set_action_name("win.copy-coords")
-        coord_display_header_box.append(btn_copy_coords)
-
-        coord_display_header_row.set_child(coord_display_header_box)
-        coord_display_group.add(coord_display_header_row)
-
-        coord_display_row = Adw.PreferencesRow()
-        coord_display_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        coord_display_box.add_css_class("side-content-box")
-        coord_display_row.set_child(coord_display_box)
-        coord_display_group.add(coord_display_row)
-        self.side_page.add(coord_display_group)
-
-        self.lbl_coords = Gtk.Label(label="")
-        self.lbl_coords.set_xalign(0)
-        self.lbl_coords.set_selectable(True)
-        self.lbl_coords.set_halign(Gtk.Align.FILL)
-        coord_display_box.append(self.lbl_coords)
-
-        # OCR group
-        ocr_group = Adw.PreferencesGroup()
-        ocr_header_row = Adw.PreferencesRow()
-        ocr_header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        ocr_header_box.add_css_class("side-header-box")
-        ocr_title = Gtk.Label(label=_("OCR"), xalign=0)
-        ocr_title.add_css_class("heading")
-        ocr_title.set_hexpand(True)
-        ocr_header_box.append(ocr_title)
-        ocr_header_row.set_child(ocr_header_box)
-        ocr_group.add(ocr_header_row)
-
-        ocr_row = Adw.PreferencesRow()
-        ocr_row_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        ocr_row_box.add_css_class("side-content-box")
-        ocr_row.set_child(ocr_row_box)
-        ocr_group.add(ocr_row)
-        self.side_page.add(ocr_group)
-
-        ocr_lbl = Gtk.Label(label=_("Language:"))
-        ocr_lbl.set_halign(Gtk.Align.START)
-        ocr_row_box.append(ocr_lbl)
-
-        self.ocr_langs = self._load_ocr_languages()
-        self.ocr_model = Gtk.StringList()
-        for _code, label in self.ocr_langs:
-            self.ocr_model.append(label)
-        self.ocr_dropdown = Gtk.DropDown.new(self.ocr_model, None)
-        self.ocr_dropdown.set_selected(0)
-        self.ocr_dropdown.set_hexpand(True)
-        self.ocr_dropdown.set_sensitive(bool(self.ocr_langs))
+        self._load_ocr_languages()
         self._select_ocr_language()
-        ocr_row_box.append(self.ocr_dropdown)
 
         # Drag & Drop Target
         drop_target = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
@@ -444,6 +270,10 @@ class MainWindow(Adw.ApplicationWindow):
         self._fit_width_pending = None
         self._spin_to_key = {s: k for k, s in self.coord_spins.items()}
         self._crop_all_pages = self.settings.get_boolean("crop-all-pages")
+
+        self.ocr = OCRController(
+            self.canvas, self._selected_ocr_code, self._ocr_done
+        )
 
         self.connect("map", self._on_map)
         self.connect("close-request", self._on_close_request)
@@ -500,11 +330,17 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _load_ocr_languages(self):
         codes = PDFCanvas.get_ocr_languages()
-        langs = [(_OCR_AUTO, _("Auto"))]
+        self.ocr_langs = [(_OCR_AUTO, _("Auto"))]
         for code in codes:
             name = _OCR_LANG_NAMES.get(code, code)
-            langs.append((code, name))
-        return langs
+            self.ocr_langs.append((code, name))
+        model = Gtk.StringList()
+        for _code, label in self.ocr_langs:
+            model.append(label)
+        self.ocr_model = model
+        self.ocr_dropdown.set_model(self.ocr_model)
+        self.ocr_dropdown.set_selected(0)
+        self.ocr_dropdown.set_sensitive(bool(self.ocr_langs))
 
     def _select_ocr_language(self):
         """Select the saved language, falling back to the system locale."""
@@ -535,31 +371,6 @@ class MainWindow(Adw.ApplicationWindow):
             return code
         return _OCR_AUTO
 
-    def _ocr_text(self, x0, top, x1, bottom, file_path, page_idx, rotation):
-        if not PDFCanvas.tesseract_available():
-            return ""
-        try:
-            doc = Poppler.Document.new_from_file(
-                GLib.filename_to_uri(file_path, None), None
-            )
-        except Exception:
-            return ""
-        scale = self.canvas.scale
-        lang = self._selected_ocr_code()
-        if lang == _OCR_AUTO:
-            for code in PDFCanvas.get_ocr_languages():
-                text = self.canvas.ocr_region(
-                    x0, top, x1, bottom, code,
-                    doc=doc, page_idx=page_idx, rotation=rotation, scale=scale,
-                )
-                if text:
-                    return text
-            return ""
-        return self.canvas.ocr_region(
-            x0, top, x1, bottom, lang,
-            doc=doc, page_idx=page_idx, rotation=rotation, scale=scale,
-        )
-
     def on_shortcuts_activated(self, action, param):
         show_shortcuts(self)
 
@@ -570,7 +381,7 @@ class MainWindow(Adw.ApplicationWindow):
         dialog = Adw.AboutDialog(
             application_name=_("PDFCropper"),
             application_icon="io.github.catoblepa.PDFCropper",
-            version="0.1.0",
+            version=APP_VERSION,
             developer_name=_("catoblepa"),
             license_type=Gtk.License.GPL_3_0,
             comments=_("Crop, inspect and extract text from PDF regions"),
@@ -655,8 +466,8 @@ class MainWindow(Adw.ApplicationWindow):
             w, h = size
             self.coord_spins["x0"].set_range(0, w)
             self.coord_spins["x1"].set_range(0, w)
-            self.coord_spins["top"].set_range(0, h)
-            self.coord_spins["bottom"].set_range(0, h)
+            self.coord_spins["y0"].set_range(0, h)
+            self.coord_spins["y1"].set_range(0, h)
             self.coord_spins["width"].set_range(0, w)
             self.coord_spins["height"].set_range(0, h)
         self._set_spins(0, 0, 0, 0)
@@ -866,9 +677,9 @@ class MainWindow(Adw.ApplicationWindow):
         self._updating_spins = True
         try:
             self.coord_spins["x0"].set_value(x0)
-            self.coord_spins["top"].set_value(top)
+            self.coord_spins["y0"].set_value(top)
             self.coord_spins["x1"].set_value(x1)
-            self.coord_spins["bottom"].set_value(bottom)
+            self.coord_spins["y1"].set_value(bottom)
             self.coord_spins["width"].set_value(max(0.0, x1 - x0))
             self.coord_spins["height"].set_value(max(0.0, bottom - top))
         finally:
@@ -879,12 +690,11 @@ class MainWindow(Adw.ApplicationWindow):
         "x0": ("x", "start"),
         "x1": ("x", "end"),
         "width": ("x", "size"),
-        "top": ("y", "start"),
-        "bottom": ("y", "end"),
+        "y0": ("y", "start"),
+        "y1": ("y", "end"),
         "height": ("y", "size"),
     }
-    _KEYS = ("x0", "top", "x1", "bottom", "width", "height")
-    _AXIS_KEYS = {"x": ("x0", "x1", "width"), "y": ("top", "bottom", "height")}
+    _AXIS_KEYS = {"x": ("x0", "x1", "width"), "y": ("y0", "y1", "height")}
 
     def on_coord_changed(self, spin):
         if self._updating_spins:
@@ -912,8 +722,8 @@ class MainWindow(Adw.ApplicationWindow):
 
         x0 = self.coord_spins["x0"].get_value()
         x1 = self.coord_spins["x1"].get_value()
-        top = self.coord_spins["top"].get_value()
-        bottom = self.coord_spins["bottom"].get_value()
+        top = self.coord_spins["y0"].get_value()
+        bottom = self.coord_spins["y1"].get_value()
 
         if axis_name == "x":
             x0, x1 = min(axis["start"], axis["end"]), max(
@@ -951,27 +761,9 @@ class MainWindow(Adw.ApplicationWindow):
             self._run_ocr(x0, top, x1, bottom)
 
     def _run_ocr(self, x0, top, x1, bottom):
-        if getattr(self, "_ocr_busy", False):
-            return
-        page_idx = self.canvas.get_current_page()
-        file_path = getattr(self.canvas, "_file_path", None)
-        if not file_path:
-            return
-        rotation = self.canvas.rotation
-        self._ocr_busy = True
+        self.ocr.run(x0, top, x1, bottom)
 
-        def work():
-            ocr_text = self._ocr_text(
-                x0, top, x1, bottom, file_path, page_idx, rotation
-            )
-            GLib.idle_add(self._ocr_done, page_idx, x0, top, x1, bottom, ocr_text)
-
-        import threading
-
-        threading.Thread(target=work, daemon=True).start()
-
-    def _ocr_done(self, page_idx, x0, top, x1, bottom, ocr_text):
-        self._ocr_busy = False
+    def _ocr_done(self, page_idx, ocr_text):
         if self.canvas.get_current_page() != page_idx:
             return
         if ocr_text:

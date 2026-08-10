@@ -3,12 +3,15 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, GLib, Gtk
 from gettext import gettext as _
 
 
 def show_shortcuts(parent):
     dialog = Adw.ShortcutsDialog()
+    dialog.set_follows_content_size(False)
+    dialog.present(parent)
+    GLib.idle_add(lambda: (dialog.set_content_height(500), False)[1])
 
     general = Adw.ShortcutsSection(title=_("General"))
     for title, trigger in (
