@@ -3,6 +3,14 @@ name: Flatpak
 on:
   push:
     tags: ["v*"]
+  pull_request:
+    paths:
+      - ".github/workflows/flatpak.yml"
+      - "data/**"
+      - "io.github.catoblepa.PDFCropper.json"
+      - "meson.build"
+      - "po/**"
+      - "src/**"
   workflow_dispatch:
 
 jobs:

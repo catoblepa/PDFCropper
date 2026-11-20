@@ -123,7 +123,7 @@
       "name": "pypdf",
       "buildsystem": "simple",
       "build-commands": [
-        "unzip -q pypdf-6.13.3-py3-none-any.whl -d ${FLATPAK_DEST}/lib/pypdf-extract && mkdir -p ${FLATPAK_DEST}/lib/python3.13/site-packages && cp -av ${FLATPAK_DEST}/lib/pypdf-extract/pypdf ${FLATPAK_DEST}/lib/python3.13/site-packages/ && cp -av ${FLATPAK_DEST}/lib/pypdf-extract/pypdf-6.13.3.dist-info ${FLATPAK_DEST}/lib/python3.13/site-packages/ && rm -rf ${FLATPAK_DEST}/lib/pypdf-extract"
+        "pip3 install --no-index --prefix=${FLATPAK_DEST} --find-links=\"file://${PWD}\" pypdf"
       ],
       "sources": [
         {
