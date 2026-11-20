@@ -48,3 +48,4 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: io.github.catoblepa.PDFCropper.flatpak
+          generate_release_notes: true
