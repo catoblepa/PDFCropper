@@ -24,8 +24,8 @@
       "sources": [
         {
           "type": "archive",
-          "url": "https://poppler.freedesktop.org/poppler-26.08.0.tar.xz",
-          "sha256": "dc906e68cea698109706ac6aa3d2c9d4512fcfcac42d90b8afcda486d1b9abd0",
+          "url": "https://poppler.freedesktop.org/poppler-26.11.0.tar.xz",
+          "sha256": "41c32680160addf5a8dd7a830e4869c01e9f6bee1abb91e44fabd1ba9d7828fb",
           "x-checker-data": {
             "type": "anitya",
             "project-id": 3686,
@@ -40,8 +40,8 @@
       "sources": [
         {
           "type": "archive",
-          "url": "https://github.com/DanBloomberg/leptonica/archive/refs/tags/1.87.0.tar.gz",
-          "sha256": "fa2b40c5caea96d1bb93a97486262aed8731b69ce25a84a6bf5d25323e33f631",
+          "url": "https://api.github.com/repos/DanBloomberg/leptonica/tarball/1.87.0",
+          "sha256": "bf61d070dd84511d34b84c279fe4c473e62a58b71724476efa1a736171755ebb",
           "x-checker-data": {
             "type": "github",
             "repo": "DanBloomberg/leptonica",
@@ -60,8 +60,8 @@
       "sources": [
         {
           "type": "archive",
-          "url": "https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.5.2.tar.gz",
-          "sha256": "6235ea0dae45ea137f59c09320406f5888383741924d98855bd2ce0d16b54f21",
+          "url": "https://api.github.com/repos/tesseract-ocr/tesseract/tarball/5.5.4",
+          "sha256": "01780edb963b0397ad369e9eabb9c3403a259e19ab73b03cd73197cc50c7a001",
           "x-checker-data": {
             "type": "github",
             "repo": "tesseract-ocr/tesseract",
@@ -145,8 +145,8 @@
       "sources": [
         {
           "type": "file",
-          "url": "https://files.pythonhosted.org/packages/py3/p/pypdf/pypdf-6.13.3-py3-none-any.whl",
-          "sha256": "c6e3f86afb625791510b02ad5480e94b63970bb957df75d44657c282ecc52224",
+          "url": "https://files.pythonhosted.org/packages/5b/ef/11ed995bd10a1632f7fea3da38ae8d42bc3ccc5b9969fe04d8620c844408/pypdf-7.1.1-py3-none-any.whl",
+          "sha256": "04c5680d4b4cfa04ab505b09393fc949860c34a4dad6565284d11a2f5c3ce8b1",
           "x-checker-data": {
             "type": "pypi",
             "name": "pypdf",
