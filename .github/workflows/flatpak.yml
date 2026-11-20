@@ -33,7 +33,7 @@ jobs:
           manifest-path: io.github.catoblepa.PDFCropper.json
           bundle: io.github.catoblepa.PDFCropper.flatpak
           cache: true
-          cache-key: flatpak-builder-${{ github.sha }}
+          cache-key: flatpak-builder-${{ hashFiles('io.github.catoblepa.PDFCropper.json') }}
           upload-artifact: false
 
       - name: Upload bundle as artifact
