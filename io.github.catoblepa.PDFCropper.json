@@ -42,6 +42,7 @@
           "type": "archive",
           "url": "https://api.github.com/repos/DanBloomberg/leptonica/tarball/1.87.0",
           "sha256": "bf61d070dd84511d34b84c279fe4c473e62a58b71724476efa1a736171755ebb",
+          "archive-type": "tar-gzip",
           "x-checker-data": {
             "type": "github",
             "repo": "DanBloomberg/leptonica",
@@ -62,6 +63,7 @@
           "type": "archive",
           "url": "https://api.github.com/repos/tesseract-ocr/tesseract/tarball/5.5.4",
           "sha256": "01780edb963b0397ad369e9eabb9c3403a259e19ab73b03cd73197cc50c7a001",
+          "archive-type": "tar-gzip",
           "x-checker-data": {
             "type": "github",
             "repo": "tesseract-ocr/tesseract",
